@@ -26,8 +26,8 @@ The file should be formed like this -
 ```
 module.exports = { 
     api: {
-        clientId: 'azoulwf5023j77d8qbuhidthgw9pg9' ,
-        secret: 'vkv28murauduxca29wd5gvipe02h8p'
+        clientId: '<Your client id>' ,
+        secret: '<Your secret>'
     }
 }
 ```
