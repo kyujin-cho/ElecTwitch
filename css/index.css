@@ -1,0 +1,137 @@
+body {
+    font-family: "Roboto", "SeoulNamsan", sans-serif;
+    background-color: #eeeeee;
+    margin: 0px;
+    min-width: 360px;
+}
+
+div#player button {
+    display: none;
+}
+
+#main {
+    float: left;
+    width: calc(70% - 20px);
+}
+
+#chat-area { 
+    float: right;
+    width: 30%;
+    margin: 10px;
+}
+
+#send-chat-card {
+    height: 100%;
+    display: inline-block;
+    width: 100%;
+}
+
+#send-chat-card #text-area {
+    float: left;
+    width: 75%;
+}
+
+#send-chat-card #send-button {
+    float: right;
+    width: 20%;
+}
+
+#chat {
+    white-space: normal;
+    overflow: scroll;
+    height: 500px;
+}
+
+#open-stream {
+    position: fixed;
+    bottom: 15px;
+    right: 15px;
+    z-index: 2;
+}
+
+.error {
+    color: #F44336;
+}
+.hidden {
+    display: none;
+}
+
+#streamer-input {
+    margin-right: auto;
+    margin-left: auto;
+}
+
+#streamer-info {
+    display: flex;
+    flex-direction: column;
+    width: calc(100% - 125px);
+    float: left;
+    margin-left: 10px;
+}
+
+.profile-photo {
+    width: 94px;
+    float: right;
+    margin-right: 10px;
+}
+
+.icon-right {
+    margin-left: 10px;
+}
+
+#title-area.streamer-on {
+    color: #4CAF50;
+}
+
+#title-area.streamer-off {
+    color: #F44336;
+}
+
+.username.mine { 
+    color: #2196F3;
+}
+
+.username.others {
+    color: #4CAF50;
+}
+
+.username.others.color-1 { 
+    color: #4CAF50;
+}
+.username.others.color-2 { 
+    color: #3F51B5;
+}
+.username.others.color-3 { 
+    color: #009688;
+}
+.username.others.color-4 { 
+    color: #CDDC39;
+}
+.username.others.color-5 { 
+    color: #FF9800;
+}
+.username.others.color-6 { 
+    color: #FF5722;
+}
+.username.others.color-7 { 
+    color: #E91E63;
+}
+
+
+span.username, span.message {
+    font-size: 13px;
+}
+
+.notice {
+    font-size: 11px;
+    color: grey;
+}
+
+div#chat > div {
+    margin-bottom: 5px;
+}
+
+img.dc-con {
+    width: 70px;
+    
+}
