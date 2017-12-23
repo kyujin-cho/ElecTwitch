@@ -45,3 +45,9 @@ First follow the 'Starting from the scratch' part, then
 
 ## Limitations
 - Can't get chats while logged out. This is due to the limitation of Twitch IRC API.
+
+## TO-DOs
+- Add support for Twitch's own emojis.
+- Add DC-con picker.
+- Add support for user badge.
+- Show stream status of user's following channels when logged in.
