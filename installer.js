@@ -3,8 +3,8 @@ var electronInstaller = require('electron-winstaller');
 resultPromise = electronInstaller.createWindowsInstaller({
     appDirectory: './dist/TestApp-win32-x64',
     outputDirectory: './dist/installer-win32-x64',
-    exe: 'TestApp.exe',
-    setupExe: 'MyAppSetup.exe',
+    exe: 'ElecTwitch.exe',
+    setupExe: 'ElecTwitchSetup.exe',
     authors: 'Kyujin Cho', 
     description: 'Simple Twitch Player built with Electron'
 });
