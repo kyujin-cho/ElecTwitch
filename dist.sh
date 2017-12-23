@@ -11,4 +11,4 @@ electron-packager . ElecTwitch --asar --platform darwin,win32 --arch x64 --out d
 # Create Windows Installable Package
 node installer.js
 # Create macOS DMG
-node_modules/.bin/electron-installer-dmg dist/ElecTwitch-darwin-x64/ElecTwitch.app ElecTwitch
+node_modules/.bin/electron-installer-dmg dist/ElecTwitch-darwin-x64/ElecTwitch.app dist/ElecTwitch
