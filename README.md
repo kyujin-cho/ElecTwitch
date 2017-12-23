@@ -1,4 +1,6 @@
 # ElecTwitch
+![Screenshot](https://github.com/thy2134/ElecTwitch/blob/master/images/screen-shot-1.png?raw=true)
+
 Very simple, feature-less twitch viewer application.   
 Made with Electron and React.js. 
 
