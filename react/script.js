@@ -490,7 +490,7 @@ class Chatroom extends React.Component {
     getCons(message) { 
         return message.split(' ').map((item, index) => {
             if(item.startsWith('~') && this.state.dcCon[item.substring(1)])
-                return (<img src={this.state.dcCon[item.substring(1)]} className="dc-con" />)
+                return (<img src={this.state.dcCon[item.substring(1)]} alt={item} className="dc-con" />)
             else
                 return <span>{' ' + item}</span>
         })

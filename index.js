@@ -31,7 +31,6 @@ function createWindow() {
   }
   win.webContents.on('will-navigate', handleRedirect)
   win.webContents.on('new-window', handleRedirect)
-  win.webContents.openDevTools()
 
 }
 

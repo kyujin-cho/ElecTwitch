@@ -245,4 +245,5 @@ gradle-app.setting
 dist
 dist/*
 secret.js
-js/*
+js/index.js
+js/index.js.map
