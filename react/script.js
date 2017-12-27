@@ -517,6 +517,7 @@ class HLSPlayer extends React.Component {
 }
 
 class Chatroom extends React.Component {
+    // Ta-Da
     constructor(props) {
         super(props)
         this.state = {chat: '', keymap: {}, users: {}, dcCon: {}, index: 0}
