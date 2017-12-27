@@ -51,7 +51,11 @@ You can use player even if not logged in, but you can't view/participate chats w
 
 ### Shortcuts 
 - Chats
-  - Ctrl(Cmd) + Enter: Send Chat
+  - Enter: Send chat
+  - Ctrl(Cmd) + Enter: Append line on writing chat
+
+### 2FA(Two-Factor Authorization, also knwon as OTP) 
+- This program supports 2FA login. Just enter verification numbers as you login on twitch website, and then restart the program once you have completed your log in procedure.
 
 ### 한국어
 1. 위의 로그인 버튼을 이용해 로그인하세요. 로그인하지 않아도, 방송은 볼 수 있지만, 채팅을 보거나 채팅에 참여할 수 없습니다. 한번 로그인하고 나면 로그인 정보가 저장되니, 아이디와 비밀번호를 매번 입력할 필요가 없습니다.
