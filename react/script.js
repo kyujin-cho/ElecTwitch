@@ -46,7 +46,7 @@ const clone = function(obj) {
 class App extends React.Component {
     constructor(props) {
         super(props)
-        this.state = {streamerName: '', users: {}, client: null, chats: [], title: 'Simple Twitch Player', error: '', isLoaded: false, streamOn: false, accessToken: {}, streamInfo: {}, sig: '', dialogOpen: false}
+        this.state = {streamerName: '', users: {}, client: null, chats: [], title: 'ElecTwitch', error: '', isLoaded: false, streamOn: false, accessToken: {}, streamInfo: {}, sig: '', dialogOpen: false}
     }
 
     componentDidMount() {
@@ -575,13 +575,23 @@ class Chatroom extends React.Component {
     }
 
     handleKey(e) {
+        // e.preventDefault()
         let m = clone(this.state.keymap)
         m[e.keyCode] = e.type == 'keydown'
         
         if(m[13] == true && m[91] == true) {
-            this.sendChat(e)
+            document.querySelectorAll('#text-area textarea').forEach((item, index) => {
+                if(item.value == this.state.chat) {
+                    item.value += '\n'
+                    return false
+                }
+            })
             m[13] = false
             m[91] = false
+        } else if(m[13] == true) {
+            e.preventDefault()
+            this.sendChat(e)
+            m[13] = false
         }
 
         this.setState({
@@ -614,7 +624,7 @@ class Chatroom extends React.Component {
                                 <TextField disabled={!this.props.irc} multiline={true} label="Chat Contents" fullWidth={true} onChange={this.handleChange.bind(this)} onKeyUp={this.handleKey.bind(this)} onKeyDown={this.handleKey.bind(this)} />
                             </div>
                             <div id="send-button">
-                                <Button id="send-chat" disabled={!this.props.irc} fab color="primary" onClick={this.sendChat.bind(this)}><ModeEditIcon /></Button>
+                                <Button id="send-chat" disabled={!this.props.irc} fab color="accent" onClick={this.sendChat.bind(this)}><ModeEditIcon /></Button>
                             </div>
                         </div>
                     </CardContent>
