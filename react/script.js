@@ -46,13 +46,20 @@ const clone = function(obj) {
 class App extends React.Component {
     constructor(props) {
         super(props)
-        this.state = {streamerName: '', users: {}, client: null, chats: [], title: 'ElecTwitch', error: '', isLoaded: false, streamOn: false, accessToken: {}, streamInfo: {}, sig: '', dialogOpen: false}
+        this.state = {streamerName: '', updateOpen: false, users: {}, client: null, chats: [], title: 'ElecTwitch', error: '', isLoaded: false, streamOn: false, accessToken: {}, streamInfo: {}, sig: '', dialogOpen: false}
     }
 
-    componentDidMount() {
+    async componentDidMount() {
         if(localStorage.key['OAuth-Token'])
             this.openChat()
-        
+        const appVersion = window.require('electron').remote.app.getVersion()
+        const newestVersion = await axios.get('https://api.github.com/repos/thy2134/ElecTwitch/releases')
+        if (newestVersion.data[0].tag_name.split('-')[0].substring(1) > appVersion) {
+            
+            this.setState({
+                updateOpen: true
+            })
+        }
     }
 
     async tryLogin() {
@@ -169,6 +176,20 @@ class App extends React.Component {
 
     handleKey(e) {
         if(e.keyCode == 91) this.onClick(null)
+    }
+
+    handleUpdateDialogClose(e) {
+        this.setState({
+            updateOpen: false
+        })
+    }
+
+    async goAndGetUpdate() {
+        const shell = window.require('electron').shell
+        let url = await axios.get('https://api.github.com/repos/thy2134/ElecTwitch/releases')
+        url = url.data[0].html_url
+        shell.openExternal(url)
+        this.handleUpdateDialogClose(null)
     }
 
     async onClick(e) {
@@ -415,6 +436,27 @@ class App extends React.Component {
                             </Button>
                             <Button onClick={this.onClick.bind(this)} color="primary">
                             Go <Send className="icon-right" />
+                            </Button>
+                        </DialogActions>
+                    </Dialog>
+                    <Dialog
+                            open={this.state.updateOpen}
+                            onClose={this.handleUpdateDialogClose.bind(this)}
+                            aria-labelledby="alert-dialog-title"
+                            aria-describedby="alert-dialog-description"
+                        >
+                        <DialogTitle id="update-dialog-title">{"Cool Update for the Cool Guys"}</DialogTitle>
+                        <DialogContent>
+                            <DialogContentText id="update-dialog-description">
+                            {"All the finest Twitch users get their update asap. Why don't you go and get some too?"}
+                            </DialogContentText>
+                        </DialogContent>
+                        <DialogActions>
+                            <Button onClick={this.handleUpdateDialogClose.bind(this)} color="primary">
+                            Close
+                            </Button>
+                            <Button onClick={this.goAndGetUpdate.bind(this)} color="primary" autoFocus>
+                            Take me to the Download Page
                             </Button>
                         </DialogActions>
                     </Dialog>
