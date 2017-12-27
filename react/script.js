@@ -142,7 +142,7 @@ class App extends React.Component {
             console.log(userstate)
             userstate.message = message
             this.setState({
-                chats: this.state.chats.concat(userstate)
+                chats: userstate
             })
         }).bind(this))
         this.setState({
@@ -406,11 +406,14 @@ class HLSPlayer extends React.Component {
 class Chatroom extends React.Component {
     constructor(props) {
         super(props)
-        this.state = {chat: '', keymap: {}, users: {}, dcCon: {}}
+        this.state = {chat: '', keymap: {}, users: {}, dcCon: {}, index: 0}
     }
 
     async componentWillReceiveProps(newProps) {
         console.log(JSON.stringify(newProps.streamerName) + ', ' + JSON.stringify(this.props.streamerName))
+        if(JSON.stringify(newProps.chats) != JSON.stringify(this.props.chats)) {
+            this.addChat(newProps.chats)
+        }
         if(JSON.stringify(newProps.streamerName) != JSON.stringify(this.props.streamerName)) {
             console.log('Chatroom (re)loaded! ')
             console.log(newProps.streamerName)
@@ -431,16 +434,20 @@ class Chatroom extends React.Component {
                     })
     
                 })
-            } else if(newProps.streamerName == 'Funzinnu') {
-                axios.get('http://funzinnu.cafe24.com/stream/dccon.php')
-                .then((jsons) => {
-                    console.log(jsons.data['고마워미도리'])
-                    this.setState({
-                        dcCon: jsons.data
-                    })
-                })
+            // } else if(newProps.streamerName == 'Funzinnu') {
+            //     axios.get('http://funzinnu.cafe24.com/stream/dccon.php')
+            //     .then((jsons) => {
+            //         console.log(jsons.data['고마워미도리'])
+            //         this.setState({
+            //             dcCon: jsons.data
+            //         })
+            //     })
             }
         }
+    }
+
+    shouldComponentUpdate(nextProps, nextState) {
+        return (JSON.stringify(nextProps.chats) == JSON.stringify(this.props.chats));
     }
 
     componentDidUpdate() {
@@ -488,35 +495,67 @@ class Chatroom extends React.Component {
     }
 
     getCons(message) { 
-        return message.split(' ').map((item, index) => {
-            if(item.startsWith('~') && this.state.dcCon[item.substring(1)])
-                return (<img src={this.state.dcCon[item.substring(1)]} alt={item} className="dc-con" />)
-            else
-                return <span>{' ' + item}</span>
+        return message.trim().split(' ').map((item, index) => {
+            if(item.length == 0)
+                return ''
+            else if(item.startsWith('~') && this.state.dcCon[item.substring(1)]) {
+                let img = document.createElement('img')
+                img.setAttribute('src', this.state.dcCon[item.substring(1)])
+                img.setAttribute('alt', item)
+                img.classList.add('dc-con')
+                return img.outerHTML
+            } else {
+                let span = document.createElement('span')
+                span.innerText = (' ' + item)
+                return span.outerHTML
+            }
         })
     }
 
+    addChat(item) {
+        let body = document.createElement('div')
+        let username = document.createElement('span')
+        let message = document.createElement('span')
+
+        username.classList.add('username')
+        username.style.color = ((item.color) ? item.color : this.getColor(item.username))
+        username.innerText = ((item['display-name'] == item.username || !item['display-name']) ? item.username : item['display-name'] + '(' + item.username + ')')
+        
+        let colon = document.createElement('span')
+        colon.innerText = ':'
+        message.classList.add('message')
+        
+        // message.innerHTML += (((this.props.streamerName == 'yeokka' || this.props.streamerName == 'Funzinnu') && item.message.indexOf('~') != -1) ? this.getCons(item.message) : item.message)
+        message.innerHTML += (((this.props.streamerName == 'yeokka') && item.message.indexOf('~') != -1) ? this.getCons(item.message) : item.message)
+        
+        body.appendChild(username)
+        body.appendChild(colon)
+        body.appendChild(message)
+        document.getElementById('chat').innerHTML += body.outerHTML
+        document.getElementById('chat').scrollTop = document.getElementById('chat').scrollHeight
+    }
+
     render() {
-        let body = <div className="hidden">Loading...</div>
-        if(this.props.chats) {
-            body = this.props.chats.map((item, index) => (
-                <div key={index + 1}>
-                    {/* <span className={"username " + ((localStorage.getItem('Username') == item.username) ? "mine" : "others color-" + this.getColor(item.username))}>  */}
-                    <span className="username" style={{color: (item.color) ? item.color : this.getColor(item.username)}}>
-                        {(item['display-name'] == item.username || !item['display-name']) ? item.username : item['display-name'] + '(' + item.username + ')'}
-                    </span>
-                     : 
-                    <span className="message">
-                        {((this.props.streamerName == 'yeokka' || this.props.streamerName == 'Funzinnu') && item.message.indexOf('~') != -1) ? this.getCons(item.message) : item.message}
-                    </span>
-                </div>
-            ))
-        }
+        // let body = <div className="hidden">Loading...</div>
+        // if(this.props.chats) {
+        //     body = this.props.chats.map((item, index) => (
+        //         <div key={index + 1}>
+        //             {/* <span className={"username " + ((localStorage.getItem('Username') == item.username) ? "mine" : "others color-" + this.getColor(item.username))}>  */}
+        //             <span className="username" style={{color: (item.color) ? item.color : this.getColor(item.username)}}>
+        //                 {(item['display-name'] == item.username || !item['display-name']) ? item.username : item['display-name'] + '(' + item.username + ')'}
+        //             </span>
+        //              : 
+        //             <span className="message">
+        //                 {((this.props.streamerName == 'yeokka' || this.props.streamerName == 'Funzinnu') && item.message.indexOf('~') != -1) ? this.getCons(item.message) : item.message}
+        //             </span>
+        //         </div>
+        //     ))
+        // }
         return (
             <div id="chat-area">
                 <Card>
                     <CardContent>
-                        <div id="chat">{body}</div>
+                        <div id="chat"></div>
                         <div id="send-chat-card">
                             <div id="text-area">
                                 <TextField disabled={!this.props.irc} multiline={true} label="Chat Contents" fullWidth={true} onChange={this.handleChange.bind(this)} onKeyUp={this.handleKey.bind(this)} onKeyDown={this.handleKey.bind(this)} />
