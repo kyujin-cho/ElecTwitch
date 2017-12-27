@@ -46,12 +46,13 @@ const clone = function(obj) {
 class App extends React.Component {
     constructor(props) {
         super(props)
-        this.state = {streamerName: '', client: null, chats: [], title: 'Simple Twitch Player', error: '', isLoaded: false, streamOn: false, accessToken: {}, streamInfo: {}, sig: '', dialogOpen: false}
+        this.state = {streamerName: '', users: {}, client: null, chats: [], title: 'Simple Twitch Player', error: '', isLoaded: false, streamOn: false, accessToken: {}, streamInfo: {}, sig: '', dialogOpen: false}
     }
 
     componentDidMount() {
         if(localStorage.key['OAuth-Token'])
             this.openChat()
+        
     }
 
     async tryLogin() {
@@ -63,9 +64,22 @@ class App extends React.Component {
         authWindow.show();
 
         let handleCallback = async function (url) {
+            console.log(url)
+            console.log('Error:' + error)
             var raw_code = /code=([^&]*)/.exec(url) || null;
             var code = (raw_code && raw_code.length > 1) ? raw_code[1] : null;
             var error = /\?error=(.+)$/.exec(url);
+
+            console.log('Code: ' + code)
+            console.log('Raw Code: ' + raw_code)
+            
+            console.log('URL: ' + url)
+            console.log('Error:' + error)
+
+            if(url.indexOf('https://passport.twitch.tv/two_factor/') != -1) {
+                authWindow.loadURL(url);
+                return;
+            }
 
             if (code || error) {
                 // Close the browser if code found or error
@@ -139,11 +153,8 @@ class App extends React.Component {
         client.connect()
         .catch(err => console.error(err))
         client.on("chat", (function (channel, userstate, message, self) {
-            console.log(userstate)
             userstate.message = message
-            this.setState({
-                chats: userstate
-            })
+            this.addChat(userstate)
         }).bind(this))
         this.setState({
             client: client
@@ -164,6 +175,8 @@ class App extends React.Component {
         this.setState({
             error: ''
         })
+
+        const s_name_cpy = new String(this.state.streamerName)
 
         let res
         let url = `https://api.twitch.tv/api/channels/${this.state.streamerName}/access_token?`
@@ -224,15 +237,7 @@ class App extends React.Component {
             document.getElementById('title-area').classList.remove('streamer-on')
             document.getElementById('title-area').classList.add('streamer-off')
         } else {
-            if(this.state.client) {
-                if(this.state.client.readyState() == 'OPEN') {
-                    if(this.state.client.getChannels().length != 0)
-                        this.state.client.part('#' + this.state.streamInfo.stream.channel.name)
-                        .then(() => this.state.client.join('#' + isStreaming.data.stream.channel.name))
-                    else
-                        this.state.client.join('#' + isStreaming.data.stream.channel.name)
-                }
-            }
+            
             const badges = await axios.get('https://api.twitch.tv/kraken/chat/'+ isStreaming.data.stream.channel._id + '/badges',{
                 headers: {
                     'Client-ID': secret.api.clientId ,
@@ -247,12 +252,23 @@ class App extends React.Component {
             document.getElementById('title-area').classList.add('streamer-on')
             document.getElementById('title-area').classList.remove('streamer-off')
         }
+
+        console.log(isStreaming)
+
+        if(this.state.client && this.state.client.readyState() == 'OPEN') {
+            if(this.state.client.getChannels().length != 0)
+                this.state.client.part('#' + this.state.streamInfo.stream.channel.name)
+                .then(() => this.state.client.join('#' + s_name_cpy))
+            else
+                this.state.client.join('#' + s_name_cpy)
+        }
+        
         console.log(isStreaming)
         
     
         this.setState({
             isLoaded: false,
-            chats: []
+            chats: null
         })
         this.setState({
             isLoaded: true,
@@ -273,6 +289,86 @@ class App extends React.Component {
             dialogOpen: true,
             error: ''
         })
+    }
+
+    getColor(username) {
+        if(!this.state.users[username]) {
+            this.state.users[username] = Math.floor(Math.random() * 7) + 1
+        }
+        return this.state.users[username]
+    }
+
+    getCons(message) { 
+        return message.trim().split(' ').map((item, index) => {
+            if(item.length == 0)
+                return ''
+            else if(item.startsWith('~') && this.state.dcCon[item.substring(1)]) {
+                let img = document.createElement('img')
+                img.setAttribute('src', this.state.dcCon[item.substring(1)])
+                img.setAttribute('alt', item)
+                img.classList.add('dc-con')
+                return img.outerHTML
+            } else {
+                let span = document.createElement('span')
+                span.innerText = (' ' + item)
+                return span.outerHTML
+            }
+        })
+    }
+    
+    replaceRange(s, start, end, substitute) {
+        return s.substring(0, start) + substitute + s.substring(end);
+    }
+
+    addChat(item) {
+        console.log(item)
+
+        let body = document.createElement('div')
+        let username = document.createElement('span')
+        let message = document.createElement('span')
+
+        username.classList.add('username')
+        username.style.color = ((item.color) ? item.color : this.getColor(item.username))
+        username.innerText = ((item['display-name'] == item.username || !item['display-name']) ? item.username : item['display-name'] + '(' + item.username + ')')
+        
+        let colon = document.createElement('span')
+        colon.innerText = ':'
+        message.classList.add('message')
+
+        if(item['emotes-raw']) {
+            item['emotes-raw'] = item['emotes-raw'].split('/')
+            console.log(item['emotes-raw'])
+            if(item['emote-only']) {
+                item.message = item['emotes-raw'].map((item, index) => {
+                    const emote = [item.split(':')[0]].concat(parseInt(item.split(':')[1].split('-')[0])).concat(parseInt(item.split(':')[1].split('-')[1]))
+                    let img = document.createElement('img')
+                    img.setAttribute('src', `https://static-cdn.jtvnw.net/emoticons/v1/${emote[0]}/1.0`)
+                    img.setAttribute('alt', emote[0])
+                    img.classList.add('emotes')
+                    return img.outerHTML
+                }).join(' ')
+            } else {
+                item['emotes-raw'].forEach((item, index) => {
+                    const emote = [item.split(':')[0]].concat(parseInt(item.split(':')[1].split('-')[0])).concat(parseInt(item.split(':')[1].split('-')[1]))
+                    
+                    console.log(emote)
+                    let img = document.createElement('img')
+                    img.setAttribute('src', `https://static-cdn.jtvnw.net/emoticons/v1/${emote[0]}/1.0`)
+                    img.setAttribute('alt', item.message.substring(emote[1], emote[2] + 1))
+                    img.classList.add('emotes')
+                    item.message = this.replaceRange(item.message, emote[1], emote[2] + 1, img.outerHTML)
+                })
+            }
+        }
+        
+        // message.innerHTML += (((this.props.streamerName == 'yeokka' || this.props.streamerName == 'Funzinnu') && item.message.indexOf('~') != -1) ? this.getCons(item.message) : item.message)
+        message.innerHTML += (((this.props.streamerName == 'yeokka') && item.message.indexOf('~') != -1) ? this.getCons(item.message) : item.message)
+        
+        body.appendChild(username)
+        body.appendChild(colon)
+        body.appendChild(message)
+        document.getElementById('chat').innerHTML += body.outerHTML
+        document.getElementById('chat').scrollTop = document.getElementById('chat').scrollHeight
     }
 
     render() {
@@ -325,7 +421,7 @@ class App extends React.Component {
                     <div id="show-input" onClick={() => document.getElementById('streamer-input').classList.remove('hidden')} className="hidden" />
                     <HLSPlayer className="hidden" isLoaded={this.state.isLoaded} streamOn={this.state.streamOn} accessToken={this.state.accessToken} sig={this.state.sig} streamInfo={this.state.streamInfo}/>
                 </div>
-                <Chatroom irc={this.state.client} chats={this.state.chats} streamerName={new String((this.state.streamInfo.stream) ? this.state.streamInfo.stream.channel.display_name : '')} />
+                <Chatroom irc={this.state.client} streamerName={new String((this.state.streamInfo.stream) ? this.state.streamInfo.stream.channel.display_name : '')} />
             </div>
         )
     }
@@ -336,8 +432,25 @@ class HLSPlayer extends React.Component {
         super(props)
         this.state = {client: null}
     }
-
+    
+    shouldComponentUpdate(nextProps, nextState) {
+        console.log('====')
+        console.log(!(JSON.stringify(nextProps.isLoaded) == JSON.stringify(this.props.isLoaded)) && 
+        (JSON.stringify(nextProps.streamInfo) == JSON.stringify(this.props.streamInfo)) && 
+        (JSON.stringify(nextProps.accessToken) == JSON.stringify(this.props.accessToken)) && 
+        (JSON.stringify(nextProps.sig) == JSON.stringify(this.props.sig)) && 
+        (JSON.stringify(nextProps.streamOn) == JSON.stringify(this.props.streamOn)))
+        console.log('====')
+        return !((JSON.stringify(nextProps.isLoaded) == JSON.stringify(this.props.isLoaded)) && 
+        (JSON.stringify(nextProps.streamInfo) == JSON.stringify(this.props.streamInfo)) && 
+        (JSON.stringify(nextProps.accessToken) == JSON.stringify(this.props.accessToken)) && 
+        (JSON.stringify(nextProps.sig) == JSON.stringify(this.props.sig)) && 
+        (JSON.stringify(nextProps.streamOn) == JSON.stringify(this.props.streamOn)));
+        // return (JSON.stringify(nextProps.streamInfo) != JSON.stringify(this.props.streamInfo));
+    }
+    
     render() {
+        console.log('Reloading...')
         let body = <div className="hidden">Not Loaded!</div>
         if(this.props.isLoaded) {
             let url = 'http://localhost'
@@ -487,70 +600,9 @@ class Chatroom extends React.Component {
         }
     }
 
-    getColor(username) {
-        if(!this.state.users[username]) {
-            this.state.users[username] = Math.floor(Math.random() * 7) + 1
-        }
-        return this.state.users[username]
-    }
-
-    getCons(message) { 
-        return message.trim().split(' ').map((item, index) => {
-            if(item.length == 0)
-                return ''
-            else if(item.startsWith('~') && this.state.dcCon[item.substring(1)]) {
-                let img = document.createElement('img')
-                img.setAttribute('src', this.state.dcCon[item.substring(1)])
-                img.setAttribute('alt', item)
-                img.classList.add('dc-con')
-                return img.outerHTML
-            } else {
-                let span = document.createElement('span')
-                span.innerText = (' ' + item)
-                return span.outerHTML
-            }
-        })
-    }
-
-    addChat(item) {
-        let body = document.createElement('div')
-        let username = document.createElement('span')
-        let message = document.createElement('span')
-
-        username.classList.add('username')
-        username.style.color = ((item.color) ? item.color : this.getColor(item.username))
-        username.innerText = ((item['display-name'] == item.username || !item['display-name']) ? item.username : item['display-name'] + '(' + item.username + ')')
-        
-        let colon = document.createElement('span')
-        colon.innerText = ':'
-        message.classList.add('message')
-        
-        // message.innerHTML += (((this.props.streamerName == 'yeokka' || this.props.streamerName == 'Funzinnu') && item.message.indexOf('~') != -1) ? this.getCons(item.message) : item.message)
-        message.innerHTML += (((this.props.streamerName == 'yeokka') && item.message.indexOf('~') != -1) ? this.getCons(item.message) : item.message)
-        
-        body.appendChild(username)
-        body.appendChild(colon)
-        body.appendChild(message)
-        document.getElementById('chat').innerHTML += body.outerHTML
-        document.getElementById('chat').scrollTop = document.getElementById('chat').scrollHeight
-    }
+    
 
     render() {
-        // let body = <div className="hidden">Loading...</div>
-        // if(this.props.chats) {
-        //     body = this.props.chats.map((item, index) => (
-        //         <div key={index + 1}>
-        //             {/* <span className={"username " + ((localStorage.getItem('Username') == item.username) ? "mine" : "others color-" + this.getColor(item.username))}>  */}
-        //             <span className="username" style={{color: (item.color) ? item.color : this.getColor(item.username)}}>
-        //                 {(item['display-name'] == item.username || !item['display-name']) ? item.username : item['display-name'] + '(' + item.username + ')'}
-        //             </span>
-        //              : 
-        //             <span className="message">
-        //                 {((this.props.streamerName == 'yeokka' || this.props.streamerName == 'Funzinnu') && item.message.indexOf('~') != -1) ? this.getCons(item.message) : item.message}
-        //             </span>
-        //         </div>
-        //     ))
-        // }
         return (
             <div id="chat-area">
                 <Card>

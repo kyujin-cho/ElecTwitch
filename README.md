@@ -45,9 +45,13 @@ First follow the 'Starting from the scratch' part, then
 3. Built files will be placed in dist/ folder.
 
 ## How do I start? 
-1. Log in using button above. Once you log in, your log in credentials will be saved - that means you don't have to type in ID/password every time you open this player.     
+1. Log in using button above. Once you log in, your log in credentials will be saved - this means you don't have to type in ID/password every time you open this player.     
 You can use player even if not logged in, but you can't view/participate chats while you're not logged in(Check 'Limits' part of this README).
 2. You can get into the stream by clicking '+' button below. Type in your streamer's ID  to get to the stream.
+
+### Shortcuts 
+- Chats
+  - Ctrl(Cmd) + Enter: Send Chat
 
 ### 한국어
 1. 위의 로그인 버튼을 이용해 로그인하세요. 로그인하지 않아도, 방송은 볼 수 있지만, 채팅을 보거나 채팅에 참여할 수 없습니다. 한번 로그인하고 나면 로그인 정보가 저장되니, 아이디와 비밀번호를 매번 입력할 필요가 없습니다.
