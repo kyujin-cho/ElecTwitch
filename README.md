@@ -1,4 +1,6 @@
 # ElecTwitch
+![Screenshot](https://github.com/thy2134/ElecTwitch/blob/master/images/screen-shot-1.png?raw=true)
+
 Very simple, feature-less twitch viewer application.   
 Made with Electron and React.js. 
 
@@ -26,8 +28,8 @@ The file should be formed like this -
 ```
 module.exports = { 
     api: {
-        clientId: 'azoulwf5023j77d8qbuhidthgw9pg9' ,
-        secret: 'vkv28murauduxca29wd5gvipe02h8p'
+        clientId: '<Your client id>' ,
+        secret: '<Your secret>'
     }
 }
 ```
@@ -43,3 +45,9 @@ First follow the 'Starting from the scratch' part, then
 
 ## Limitations
 - Can't get chats while logged out. This is due to the limitation of Twitch IRC API.
+
+## TO-DOs
+- Add support for Twitch's own emojis.
+- Add DC-con picker.
+- Add support for user badge.
+- Show stream status of user's following channels when logged in.
