@@ -54,10 +54,10 @@ You can use player even if not logged in, but you can't view/participate chats w
 2. 밑의 + 버튼을 이용해 스트리머 채널로 이동하세요.
 3. [yeokka](https://twitch.tv/yeokka) 방에서는 '역가티콘' 이 이미지로 치환되어 보입니다.
 ## Limitations
-- Can't get chats while logged out. This is due to the limitation of Twitch IRC API.
+- Can't get chats while logged out. This is due to the limitation of Twitch IRC API - Twitch requires log in credential of user when entering chatroom.
 
 ## TO-DOs
-- Add support for Twitch's own emojis.
+- Add support for Twitch's own emojis, such as BloodTrail or BibleThump.
 - Add DC-con picker.
 - Add support for user badge.
 - Show stream status of user's following channels when logged in.
