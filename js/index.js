@@ -20127,7 +20127,7 @@ var App = function (_React$Component) {
                                     console.log(userstate);
                                     userstate.message = message;
                                     this.setState({
-                                        chats: this.state.chats.concat(userstate)
+                                        chats: userstate
                                     });
                                 }.bind(this));
                                 this.setState({
@@ -20540,7 +20540,7 @@ var Chatroom = function (_React$Component3) {
 
         var _this4 = _possibleConstructorReturn(this, (Chatroom.__proto__ || Object.getPrototypeOf(Chatroom)).call(this, props));
 
-        _this4.state = { chat: '', keymap: {}, users: {}, dcCon: {} };
+        _this4.state = { chat: '', keymap: {}, users: {}, dcCon: {}, index: 0 };
         return _this4;
     }
 
@@ -20555,6 +20555,9 @@ var Chatroom = function (_React$Component3) {
                         switch (_context5.prev = _context5.next) {
                             case 0:
                                 console.log(JSON.stringify(newProps.streamerName) + ', ' + JSON.stringify(this.props.streamerName));
+                                if (JSON.stringify(newProps.chats) != JSON.stringify(this.props.chats)) {
+                                    this.addChat(newProps.chats);
+                                }
                                 if (JSON.stringify(newProps.streamerName) != JSON.stringify(this.props.streamerName)) {
                                     console.log('Chatroom (re)loaded! ');
                                     console.log(newProps.streamerName);
@@ -20573,17 +20576,18 @@ var Chatroom = function (_React$Component3) {
                                                 dcCon: items
                                             });
                                         });
-                                    } else if (newProps.streamerName == 'Funzinnu') {
-                                        _axios2.default.get('http://funzinnu.cafe24.com/stream/dccon.php').then(function (jsons) {
-                                            console.log(jsons.data['고마워미도리']);
-                                            _this5.setState({
-                                                dcCon: jsons.data
-                                            });
-                                        });
+                                        // } else if(newProps.streamerName == 'Funzinnu') {
+                                        //     axios.get('http://funzinnu.cafe24.com/stream/dccon.php')
+                                        //     .then((jsons) => {
+                                        //         console.log(jsons.data['고마워미도리'])
+                                        //         this.setState({
+                                        //             dcCon: jsons.data
+                                        //         })
+                                        //     })
                                     }
                                 }
 
-                            case 2:
+                            case 3:
                             case 'end':
                                 return _context5.stop();
                         }
@@ -20597,6 +20601,11 @@ var Chatroom = function (_React$Component3) {
 
             return componentWillReceiveProps;
         }()
+    }, {
+        key: 'shouldComponentUpdate',
+        value: function shouldComponentUpdate(nextProps, nextState) {
+            return JSON.stringify(nextProps.chats) == JSON.stringify(this.props.chats);
+        }
     }, {
         key: 'componentDidUpdate',
         value: function componentDidUpdate() {
@@ -20653,43 +20662,62 @@ var Chatroom = function (_React$Component3) {
         value: function getCons(message) {
             var _this7 = this;
 
-            return message.split(' ').map(function (item, index) {
-                if (item.startsWith('~') && _this7.state.dcCon[item.substring(1)]) return _react2.default.createElement('img', { src: _this7.state.dcCon[item.substring(1)], className: 'dc-con' });else return _react2.default.createElement(
-                    'span',
-                    null,
-                    ' ' + item
-                );
+            return message.trim().split(' ').map(function (item, index) {
+                if (item.length == 0) return '';else if (item.startsWith('~') && _this7.state.dcCon[item.substring(1)]) {
+                    var img = document.createElement('img');
+                    img.setAttribute('src', _this7.state.dcCon[item.substring(1)]);
+                    img.setAttribute('alt', item);
+                    img.classList.add('dc-con');
+                    return img.outerHTML;
+                } else {
+                    var span = document.createElement('span');
+                    span.innerText = ' ' + item;
+                    return span.outerHTML;
+                }
             });
+        }
+    }, {
+        key: 'addChat',
+        value: function addChat(item) {
+            var body = document.createElement('div');
+            var username = document.createElement('span');
+            var message = document.createElement('span');
+
+            username.classList.add('username');
+            username.style.color = item.color ? item.color : this.getColor(item.username);
+            username.innerText = item['display-name'] == item.username || !item['display-name'] ? item.username : item['display-name'] + '(' + item.username + ')';
+
+            var colon = document.createElement('span');
+            colon.innerText = ':';
+            message.classList.add('message');
+
+            // message.innerHTML += (((this.props.streamerName == 'yeokka' || this.props.streamerName == 'Funzinnu') && item.message.indexOf('~') != -1) ? this.getCons(item.message) : item.message)
+            message.innerHTML += this.props.streamerName == 'yeokka' && item.message.indexOf('~') != -1 ? this.getCons(item.message) : item.message;
+
+            body.appendChild(username);
+            body.appendChild(colon);
+            body.appendChild(message);
+            document.getElementById('chat').innerHTML += body.outerHTML;
+            document.getElementById('chat').scrollTop = document.getElementById('chat').scrollHeight;
         }
     }, {
         key: 'render',
         value: function render() {
-            var _this8 = this;
-
-            var body = _react2.default.createElement(
-                'div',
-                { className: 'hidden' },
-                'Loading...'
-            );
-            if (this.props.chats) {
-                body = this.props.chats.map(function (item, index) {
-                    return _react2.default.createElement(
-                        'div',
-                        { key: index + 1 },
-                        _react2.default.createElement(
-                            'span',
-                            { className: 'username', style: { color: item.color ? item.color : _this8.getColor(item.username) } },
-                            item['display-name'] == item.username || !item['display-name'] ? item.username : item['display-name'] + '(' + item.username + ')'
-                        ),
-                        ':',
-                        _react2.default.createElement(
-                            'span',
-                            { className: 'message' },
-                            (_this8.props.streamerName == 'yeokka' || _this8.props.streamerName == 'Funzinnu') && item.message.indexOf('~') != -1 ? _this8.getCons(item.message) : item.message
-                        )
-                    );
-                });
-            }
+            // let body = <div className="hidden">Loading...</div>
+            // if(this.props.chats) {
+            //     body = this.props.chats.map((item, index) => (
+            //         <div key={index + 1}>
+            //             {/* <span className={"username " + ((localStorage.getItem('Username') == item.username) ? "mine" : "others color-" + this.getColor(item.username))}>  */}
+            //             <span className="username" style={{color: (item.color) ? item.color : this.getColor(item.username)}}>
+            //                 {(item['display-name'] == item.username || !item['display-name']) ? item.username : item['display-name'] + '(' + item.username + ')'}
+            //             </span>
+            //              : 
+            //             <span className="message">
+            //                 {((this.props.streamerName == 'yeokka' || this.props.streamerName == 'Funzinnu') && item.message.indexOf('~') != -1) ? this.getCons(item.message) : item.message}
+            //             </span>
+            //         </div>
+            //     ))
+            // }
             return _react2.default.createElement(
                 'div',
                 { id: 'chat-area' },
@@ -20699,11 +20727,7 @@ var Chatroom = function (_React$Component3) {
                     _react2.default.createElement(
                         _Card.CardContent,
                         null,
-                        _react2.default.createElement(
-                            'div',
-                            { id: 'chat' },
-                            body
-                        ),
+                        _react2.default.createElement('div', { id: 'chat' }),
                         _react2.default.createElement(
                             'div',
                             { id: 'send-chat-card' },
