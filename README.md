@@ -65,7 +65,7 @@ You can use player even if not logged in, but you can't view/participate chats w
 - Can't get chats while logged out. This is due to the limitation of Twitch IRC API - Twitch requires log in credential of user when entering chatroom.
 
 ## TO-DOs
-- ~~Add support for Twitch's own emojis, such as BloodTrail or BibleThump.~~ Issue Resolved! Check update v0.0.4-alpha.
+- ~~Add support for Twitch's own emojis, such as BloodTrail or BibleThump.~~ Issue Resolved! Check update v0.0.3-alpha.
 - Add DC-con picker.
 - Add support for user badge.
 - Show stream status of user's following channels when logged in.
