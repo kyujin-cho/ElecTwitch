@@ -388,7 +388,11 @@ class App extends React.Component {
         body.appendChild(username)
         body.appendChild(colon)
         body.appendChild(message)
+
         document.getElementById('chat').innerHTML += body.outerHTML
+        if(document.querySelectorAll('div#chat > div').length > 120)
+            document.getElementById('chat').removeChild(document.querySelector('div#chat > div'))
+
         document.getElementById('chat').scrollTop = document.getElementById('chat').scrollHeight
     }
 
