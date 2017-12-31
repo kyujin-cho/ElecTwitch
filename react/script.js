@@ -21,6 +21,12 @@ import Dialog, {
 import Send from '../node_modules/material-ui-icons/Send'
 import AddIcon from '../node_modules/material-ui-icons/Add'
 import ModeEditIcon from '../node_modules/material-ui-icons/ModeEdit'
+import { GridList, GridListTile, GridListTileBar } from 'material-ui/GridList';
+import IconButton from 'material-ui/IconButton';
+import StarBorderIcon from 'material-ui-icons/StarBorder';
+import Paper from 'material-ui/Paper';
+import { win32 } from 'path';
+
 
 const {BrowserWindow} = window.require('electron').remote
 
@@ -43,10 +49,11 @@ const clone = function(obj) {
     return copy;
 }
 
+
 class App extends React.Component {
     constructor(props) {
         super(props)
-        this.state = {streamerName: '', updateOpen: false, users: {}, client: null, chats: [], title: 'ElecTwitch', error: '', isLoaded: false, streamOn: false, accessToken: {}, streamInfo: {}, sig: '', dialogOpen: false}
+        this.state = {streamerName: '', follow_streams: [], dcCon: {}, updateOpen: false, users: {}, client: null, chats: [], title: 'ElecTwitch', error: '', isLoaded: false, streamOn: false, accessToken: {}, streamInfo: {}, sig: '', dialogOpen: false}
     }
 
     async componentDidMount() {
@@ -118,6 +125,68 @@ class App extends React.Component {
                 localStorage.setItem('Username', userData.data.name)
                 document.getElementById('login-button').disabled = true
                 document.getElementById('login-button').innerText = 'Logged In'
+
+                
+                const follows = await axios.get('https://api.twitch.tv/helix/users/follows?from_id=' + userData.data._id, {
+                    headers: {
+                        'Client-ID' : secret.api.clientId
+                    }
+                })
+                console.log(follows)
+                
+                let games = JSON.parse(window.localStorage.getItem('Games-JSON'))
+                if(games === null)
+                    games = {}
+                let gamesToRetrieve = []
+                let follow_streams = []
+                const streams = await axios.get('https://api.twitch.tv/helix/streams?user_id=' + follows.data.data.map(item => item.to_id).join('&user_id='), {
+                    headers: {
+                        'Client-ID' : 'jzkbprff40iqj646a697cyrvl0zt2m6'                           
+                    }
+                })
+                
+                follow_streams = streams.data.data
+                follow_streams.map(((item, index) => {
+                    if(!games[item.game_id]) {
+                        gamesToRetrieve.push({id: item.user_id, game_id: item.game_id})
+                    }
+                }))
+                console.log(follow_streams)
+
+                if(gamesToRetrieve.length > 0) {
+                    const game = await axios.get('https://api.twitch.tv/helix/games?id=' + gamesToRetrieve.map(item => item.game_id).join('&id='), {
+                        headers: {
+                            'Client-ID': secret.api.clientId
+                        }
+                    })
+                    game.data.data.forEach((item, index) => {
+                        games[item.id] = item
+                    })
+                }
+
+                const users = await axios.get('https://api.twitch.tv/helix/users?id=' + follow_streams.map(item => item.user_id), {
+                    headers: {
+                        'Client-ID' : secret.api.clientId
+                    }
+                })
+                users.data.data.forEach(item => {
+                    let i = 0
+                    while(i < follow_streams.length && follow_streams[i].user_id != item.id) {
+                        i++;
+                    }
+                    if(i == follow_streams.length)
+                        return true;
+                    else
+                        follow_streams[i].game = item.name
+                    follow_streams[i].display_name = item.display_name
+                })
+                
+                window.localStorage.setItem('Games-JSON', JSON.stringify(games))
+                console.log(follow_streams)
+                console.log('====')
+                this.setState({
+                    follow_streams: follow_streams
+                })
 
                 if(this.state.streamOn)
                     this.state.client.join('#' + this.state.streamInfo.stream.channel.name)
@@ -192,15 +261,35 @@ class App extends React.Component {
         this.handleUpdateDialogClose(null)
     }
 
-    async onClick(e) {
+    onClick(e) {
+        this.openStream(new String(this.state.streamerName).toString(), true)
+    }
+
+    async openStream(userInfo, isClicked) {
         this.setState({
             error: ''
         })
 
-        const s_name_cpy = new String(this.state.streamerName)
+        if(!isClicked) { 
+            const userdata = await axios.get('https://api.twitch.tv/helix/users?id=' + userInfo, {
+                headers: {
+                    'Client-ID' : secret.api.clientId
+                }
+            })
+            if(userdata.data) {
+                
+                userInfo = userdata.data.data[0].login
+            } else {
+                this.setState({
+                    error: '그런 스트리머가 존재하지 않습니다.',
+                    streamOn: false
+                })
+                return
+            }        
+        }
 
         let res
-        let url = `https://api.twitch.tv/api/channels/${this.state.streamerName}/access_token?`
+        let url = `https://api.twitch.tv/api/channels/${userInfo}/access_token?`
         url += serialize({
             'adblock':'false', 
             'need_https':'false',
@@ -226,7 +315,7 @@ class App extends React.Component {
         })
         const streamInfo = JSON.parse(res.data.token)
         
-        url = `https://usher.ttvnw.net/api/channel/hls/${this.state.streamerName}.m3u8?`
+        url = `https://usher.ttvnw.net/api/channel/hls/${userInfo}.m3u8?`
         url += serialize({
             'allow_source': 'true', 
             'baking_bread': 'false', 
@@ -273,15 +362,42 @@ class App extends React.Component {
             document.getElementById('title-area').classList.add('streamer-on')
             document.getElementById('title-area').classList.remove('streamer-off')
         }
+        document.getElementsByClassName('following-streams')[0].classList.add('hidden')
+        if(userInfo == 'yeokka') {
+            axios.get('https://krynen.github.io/jsassist-custom-css/js/dccon_list.json')
+            .then((jsons) => { 
+                let items = {}
+                console.log(jsons)
+                jsons = jsons.data
+                jsons.dccons.forEach((item) => {
+                    item.keywords.forEach((kwd) => {
+                        console.log(kwd + ':' + item.path)
+                        items[kwd] = item.path
+                    })
+                })
+                this.setState({
+                    dcCon: items
+            })
+
+        })
+        // } else if(newProps.streamerName == 'Funzinnu') {
+        //     axios.get('http://funzinnu.cafe24.com/stream/dccon.php')
+        //     .then((jsons) => {
+        //         console.log(jsons.data['고마워미도리'])
+        //         this.setState({
+        //             dcCon: jsons.data
+        //         })
+        //     })
+        }
 
         console.log(isStreaming)
 
         if(this.state.client && this.state.client.readyState() == 'OPEN') {
             if(this.state.client.getChannels().length != 0)
                 this.state.client.part('#' + this.state.streamInfo.stream.channel.name)
-                .then(() => this.state.client.join('#' + s_name_cpy))
+                .then(() => this.state.client.join('#' + userInfo))
             else
-                this.state.client.join('#' + s_name_cpy)
+                this.state.client.join('#' + userInfo)
         }
         
         console.log(isStreaming)
@@ -293,11 +409,12 @@ class App extends React.Component {
         })
         this.setState({
             isLoaded: true,
-            title: 'Watching ' + (this.state.streamInfo ? this.state.streamInfo.stream.channel.display_name : new String(this.state.streamerName))
+            title: 'Watching ' + (this.state.streamInfo ? this.state.streamInfo.stream.channel.display_name : new String(userInfo))
         })
         document.getElementById('show-input').classList.remove('hidden')
         this.handleClose()
     }
+
 
     handleClose(e) { 
         this.setState({
@@ -334,7 +451,7 @@ class App extends React.Component {
                 span.innerText = (' ' + item)
                 return span.outerHTML
             }
-        })
+        }).join(' ')
     }
     
     replaceRange(s, start, end, substitute) {
@@ -381,9 +498,10 @@ class App extends React.Component {
                 })
             }
         }
-        
-        // message.innerHTML += (((this.props.streamerName == 'yeokka' || this.props.streamerName == 'Funzinnu') && item.message.indexOf('~') != -1) ? this.getCons(item.message) : item.message)
-        message.innerHTML += (((this.props.streamerName == 'yeokka') && item.message.indexOf('~') != -1) ? this.getCons(item.message) : item.message)
+        console.log('StreamerName:' + this.state.streamInfo)
+        console.log('IsEmoji:' + ((this.state.streamInfo.stream.channel.display_name == 'yeokka') && item.message.indexOf('~') != -1))
+        // message.innerHTML += (((this.state.streamInfo.stream.channel.display_name == 'yeokka' || this.state.streamInfo.stream.channel.display_name == ' ') && item.message.indexOf('~') != -1) ? this.getCons(item.message) : item.message)
+        message.innerHTML += (((this.state.streamInfo.stream.channel.display_name == 'yeokka') && item.message.indexOf('~') != -1) ? this.getCons(item.message) : item.message)
         
         body.appendChild(username)
         body.appendChild(colon)
@@ -466,6 +584,7 @@ class App extends React.Component {
                     </Dialog>
                     <div id="show-input" onClick={() => document.getElementById('streamer-input').classList.remove('hidden')} className="hidden" />
                     <HLSPlayer className="hidden" isLoaded={this.state.isLoaded} streamOn={this.state.streamOn} accessToken={this.state.accessToken} sig={this.state.sig} streamInfo={this.state.streamInfo}/>
+                    <FollowStreams streams={this.state.follow_streams} openStream={this.openStream.bind(this)} />
                 </div>
                 <Chatroom irc={this.state.client} streamerName={new String((this.state.streamInfo.stream) ? this.state.streamInfo.stream.channel.display_name : '')} />
             </div>
@@ -577,32 +696,7 @@ class Chatroom extends React.Component {
         if(JSON.stringify(newProps.streamerName) != JSON.stringify(this.props.streamerName)) {
             console.log('Chatroom (re)loaded! ')
             console.log(newProps.streamerName)
-            if(newProps.streamerName == 'yeokka') {
-                axios.get('https://krynen.github.io/jsassist-custom-css/js/dccon_list.json')
-                .then((jsons) => { 
-                    let items = {}
-                    console.log(jsons)
-                    jsons = jsons.data
-                    jsons.dccons.forEach((item) => {
-                        item.keywords.forEach((kwd) => {
-                            console.log(kwd + ':' + item.path)
-                            items[kwd] = item.path
-                        })
-                    })
-                    this.setState({
-                        dcCon: items
-                    })
-    
-                })
-            // } else if(newProps.streamerName == 'Funzinnu') {
-            //     axios.get('http://funzinnu.cafe24.com/stream/dccon.php')
-            //     .then((jsons) => {
-            //         console.log(jsons.data['고마워미도리'])
-            //         this.setState({
-            //             dcCon: jsons.data
-            //         })
-            //     })
-            }
+            
         }
     }
 
@@ -675,6 +769,42 @@ class Chatroom extends React.Component {
                         </div>
                     </CardContent>
                 </Card>
+            </div>
+        )
+    }
+}
+
+class FollowStreams extends React.Component {
+    render() {
+        let div = (<div> No Stream Yet! </div>)
+        const games = JSON.parse(window.localStorage.getItem('Games-JSON'))
+        if(this.props.streams.length > 0) {
+            div = this.props.streams.map((item, index) => {
+                console.log(item)
+                return (
+                <GridListTile key={item.img} onClick={() => this.props.openStream(item.user_id, false)}>
+                    <img src={item.thumbnail_url.replace('{width}', '300').replace('{height}', '200')} alt={item.title} />
+                    <GridListTileBar
+                    title={item.display_name + ' playing ' + games[item.game_id].name}
+                    className={"root title"}
+                    
+                    />
+                </GridListTile>
+                )
+            })
+        }
+        return ( 
+            <div className={"following-streams"}>
+                <Paper className={'paper'} elevation={4}>
+                    <div className="inside">
+                        <Typography type="headline" component="h2">
+                        Follows
+                        </Typography>
+                        <GridList className={'gridList'} cols={2.5}>
+                            {div}
+                        </GridList>
+                    </div>
+                </Paper>
             </div>
         )
     }

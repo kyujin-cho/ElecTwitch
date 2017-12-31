@@ -135,3 +135,29 @@ img.dc-con {
     width: 70px;
     
 }
+
+root {
+    display: 'flex';
+    flex-wrap: 'wrap';
+    justify-content: 'space-around';
+    overflow: 'hidden';
+  }
+gridList {
+    flex-wrap: 'nowrap';
+    transform: 'translateZ(0)';
+}
+title {
+}
+titleBar {
+    background:
+    'linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.3) 70%, rgba(0,0,0,0) 100%)';
+}
+
+.following-streams {
+    margin-top: 10px;
+    margin-left: 10px;
+}
+
+.following-streams .inside {
+    margin: 10px;
+}
