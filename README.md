@@ -36,7 +36,8 @@ module.exports = {
 ```
 2. Clone repo.
 3. Run `npm install` to install necessary package.
-4. Run `node_modules/.bin/electron .` to start the viewer.
+4. Run `node_modules/.bin/webpack` to build sources.
+5. Run `node_modules/.bin/electron .` to start the viewer.
 
 #### Distributing
 First follow the 'Starting from the scratch' part, then

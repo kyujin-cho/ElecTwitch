@@ -57,8 +57,7 @@ class App extends React.Component {
     }
 
     async componentDidMount() {
-        if(localStorage.key['OAuth-Token'])
-            this.openChat()
+        this.openChat()
         const appVersion = window.require('electron').remote.app.getVersion()
         const newestVersion = await axios.get('https://api.github.com/repos/thy2134/ElecTwitch/releases')
         if (newestVersion.data[0].tag_name.split('-')[0].substring(1) > appVersion) {
@@ -103,7 +102,6 @@ class App extends React.Component {
             // If there is a code, proceed to get token from github
             if (code) {
                 console.log(code)
-                this.openChat()
                 const params = `client_id=${secret.api.clientId}`
                 + `&client_secret=${secret.api.secret}`
                 + `&code=${code}`
@@ -188,9 +186,8 @@ class App extends React.Component {
                     follow_streams: follow_streams
                 })
 
-                if(this.state.streamOn)
-                    this.state.client.join('#' + this.state.streamInfo.stream.channel.name)
                 
+                this.openChat()
             } else if (error) {
                 alert('Oops! Something went wrong and we couldn\'t' +
                 'log you in using Github. Please try again.');
@@ -223,10 +220,23 @@ class App extends React.Component {
                 password: "oauth:" + localStorage.getItem('OAuth-Token')
             }
         }
+        if (localStorage.getItem('OAuth-Token') === null) {
+            options.identity = {
+                username: "justinfan" + Math.floor(Math.random() * 100000),
+                password: ""
+            };
+        }
         console.log(options)
         
+        if (this.state.client) {
+          this.state.client.disconnect()
+        }
+
         const client = new tmi.client(options)
-        client.connect()
+        client.connect().then(() => {
+          if(this.state.streamOn)
+              this.state.client.join('#' + this.state.streamInfo.stream.channel.name)
+        })
         .catch(err => console.error(err))
         client.on("chat", (function (channel, userstate, message, self) {
             userstate.message = message
