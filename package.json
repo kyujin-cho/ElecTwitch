@@ -34,6 +34,7 @@
     "electron": "^1.7.10",
     "electron-installer-dmg": "^0.2.1",
     "electron-prebuilt": "^1.4.13",
-    "electron-winstaller": "^2.6.3"
+    "electron-winstaller": "^2.6.3",
+    "webpack": "^3.10.0"
   }
 }
