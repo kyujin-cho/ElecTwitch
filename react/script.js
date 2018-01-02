@@ -288,6 +288,7 @@ class App extends React.Component {
             }        
         }
 
+        const prev_user = (this.state.streamInfo.stream) ? this.state.streamInfo.stream.channel.name : ''
         let res
         let url = `https://api.twitch.tv/api/channels/${userInfo}/access_token?`
         url += serialize({
@@ -394,7 +395,7 @@ class App extends React.Component {
 
         if(this.state.client && this.state.client.readyState() == 'OPEN') {
             if(this.state.client.getChannels().length != 0)
-                this.state.client.part('#' + this.state.streamInfo.stream.channel.name)
+                this.state.client.part('#' + prev_user)
                 .then(() => this.state.client.join('#' + userInfo))
             else
                 this.state.client.join('#' + userInfo)
@@ -599,19 +600,17 @@ class HLSPlayer extends React.Component {
     }
     
     shouldComponentUpdate(nextProps, nextState) {
-        console.log('====')
-        console.log(!(JSON.stringify(nextProps.isLoaded) == JSON.stringify(this.props.isLoaded)) && 
-        (JSON.stringify(nextProps.streamInfo) == JSON.stringify(this.props.streamInfo)) && 
-        (JSON.stringify(nextProps.accessToken) == JSON.stringify(this.props.accessToken)) && 
-        (JSON.stringify(nextProps.sig) == JSON.stringify(this.props.sig)) && 
-        (JSON.stringify(nextProps.streamOn) == JSON.stringify(this.props.streamOn)))
-        console.log('====')
+        if(JSON.stringify(nextProps.streamInfo) != JSON.stringify(this.props.streamInfo) && this.props.streamOn)
+            this.refs.player.pause()
         return !((JSON.stringify(nextProps.isLoaded) == JSON.stringify(this.props.isLoaded)) && 
         (JSON.stringify(nextProps.streamInfo) == JSON.stringify(this.props.streamInfo)) && 
         (JSON.stringify(nextProps.accessToken) == JSON.stringify(this.props.accessToken)) && 
         (JSON.stringify(nextProps.sig) == JSON.stringify(this.props.sig)) && 
-        (JSON.stringify(nextProps.streamOn) == JSON.stringify(this.props.streamOn)));
+        (JSON.stringify(nextProps.streamOn) == JSON.stringify(this.props.streamOn)))
         // return (JSON.stringify(nextProps.streamInfo) != JSON.stringify(this.props.streamInfo));
+    }
+
+    componentDidUpdate() {
     }
     
     render() {
@@ -635,7 +634,7 @@ class HLSPlayer extends React.Component {
                     'token': this.props.accessToken
                 })
                 const isStreamerOn = axios.get(url)
-                playerArea = (<Player autoPlay={this.props.streamOn}>
+                playerArea = (<Player ref="player" autoPlay={this.props.streamOn}>
                     <HLSSource
                         isVideoChild
                         src={url}
