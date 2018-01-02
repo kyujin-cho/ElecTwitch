@@ -141,7 +141,7 @@ class App extends React.Component {
                 let follow_streams = []
                 const streams = await axios.get('https://api.twitch.tv/helix/streams?user_id=' + follows.data.data.map(item => item.to_id).join('&user_id='), {
                     headers: {
-                        'Client-ID' : 'jzkbprff40iqj646a697cyrvl0zt2m6'                           
+                        'Client-ID' : secret.api.clientId
                     }
                 })
                 
