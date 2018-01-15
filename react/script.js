@@ -167,17 +167,20 @@ class App extends React.Component {
                         'Client-ID' : secret.api.clientId
                     }
                 })
-                users.data.data.forEach(item => {
-                    let i = 0
-                    while(i < follow_streams.length && follow_streams[i].user_id != item.id) {
-                        i++;
-                    }
-                    if(i == follow_streams.length)
-                        return true;
-                    else
-                        follow_streams[i].game = item.name
-                    follow_streams[i].display_name = item.display_name
-                })
+                console.log(users.data)
+                if(users.data.data) {
+                    users.data.data.forEach(item => {
+                        let i = 0
+                        while(i < follow_streams.length && follow_streams[i].user_id != item.id) {
+                            i++;
+                        }
+                        if(i == follow_streams.length)
+                            return true;
+                        else
+                            follow_streams[i].game = item.name
+                        follow_streams[i].display_name = item.display_name
+                    })
+                }
                 
                 window.localStorage.setItem('Games-JSON', JSON.stringify(games))
                 console.log(follow_streams)
@@ -374,11 +377,13 @@ class App extends React.Component {
             document.getElementById('title-area').classList.remove('streamer-off')
         }
         document.getElementsByClassName('following-streams')[0].classList.add('hidden')
+         
+        console.log('381:' + userInfo)
         if(userInfo == 'yeokka') {
+            console.log('Loading yeokka DCCon...')
             axios.get('https://krynen.github.io/jsassist-custom-css/js/dccon_list.json')
             .then((jsons) => { 
                 let items = {}
-                console.log(jsons)
                 jsons = jsons.data
                 jsons.dccons.forEach((item) => {
                     item.keywords.forEach((kwd) => {
@@ -386,20 +391,27 @@ class App extends React.Component {
                         items[kwd] = item.path
                     })
                 })
+                console.log(items)
                 this.setState({
                     dcCon: items
             })
 
         })
-        } else if(newProps.streamerName == 'Funzinnu') {
+        } else if(userInfo == 'funzinnu') {
+            console.log('Loading funzinnu DCCon...')
             axios.get('http://funzinnu.cafe24.com/stream/dccon.php')
             .then((jsons) => {
-                console.log(jsons.data['고마워미도리'])
+                console.log(jsons.data)
                 this.setState({
                     dcCon: jsons.data
                 })
             })
+            .catch((e) => {
+                console.error(e)
+            })
         }
+
+        console.log(this.state.dcCon)
 
         console.log(isStreaming)
 
@@ -471,8 +483,8 @@ class App extends React.Component {
     }
 
     addChat(item) {
-        console.log(item)
-
+        // console.log(item)
+        // console.log('addChat Fired')
         let body = document.createElement('div')
         let username = document.createElement('span')
         let message = document.createElement('span')
@@ -510,10 +522,12 @@ class App extends React.Component {
                 })
             }
         }
-        console.log('StreamerName:' + this.state.streamInfo)
-        console.log('IsEmoji:' + ((this.state.streamInfo.stream.channel.display_name == 'yeokka') && item.message.indexOf('~') != -1))
-        // message.innerHTML += (((this.state.streamInfo.stream.channel.display_name == 'yeokka' || this.state.streamInfo.stream.channel.display_name == ' ') && item.message.indexOf('~') != -1) ? this.getCons(item.message) : item.message)
-        message.innerHTML += (((this.state.streamInfo.stream.channel.display_name == 'yeokka') && item.message.indexOf('~') != -1) ? this.getCons(item.message) : item.message)
+        const scrollDiff = document.getElementById('chat').scrollHeight - document.getElementById('chat').scrollTop
+        
+        console.log('StreamerName:')
+        console.log(this.state.streamInfo.stream.channel)
+        console.log('IsEmoji:' + ((this.state.streamInfo.stream.channel.display_name == 'yeokka' || this.state.streamInfo.stream.channel.name == 'funzinnu') && item.message.indexOf('~') != -1))
+        message.innerHTML += (((this.state.streamInfo.stream.channel.display_name == 'yeokka' || this.state.streamInfo.stream.channel.name == 'funzinnu') && item.message.indexOf('~') != -1) ? this.getCons(item.message) : item.message)
         
         body.appendChild(username)
         body.appendChild(colon)
@@ -523,7 +537,7 @@ class App extends React.Component {
         if(document.querySelectorAll('div#chat > div').length > 120)
             document.getElementById('chat').removeChild(document.querySelector('div#chat > div'))
 
-        document.getElementById('chat').scrollTop = document.getElementById('chat').scrollHeight
+        document.getElementById('chat').scrollTop = (document.getElementById('chat').scrollHeight - scrollDiff)
     }
 
     render() {
