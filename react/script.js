@@ -391,14 +391,14 @@ class App extends React.Component {
             })
 
         })
-        // } else if(newProps.streamerName == 'Funzinnu') {
-        //     axios.get('http://funzinnu.cafe24.com/stream/dccon.php')
-        //     .then((jsons) => {
-        //         console.log(jsons.data['고마워미도리'])
-        //         this.setState({
-        //             dcCon: jsons.data
-        //         })
-        //     })
+        } else if(newProps.streamerName == 'Funzinnu') {
+            axios.get('http://funzinnu.cafe24.com/stream/dccon.php')
+            .then((jsons) => {
+                console.log(jsons.data['고마워미도리'])
+                this.setState({
+                    dcCon: jsons.data
+                })
+            })
         }
 
         console.log(isStreaming)
@@ -454,6 +454,7 @@ class App extends React.Component {
             else if(item.startsWith('~') && this.state.dcCon[item.substring(1)]) {
                 let img = document.createElement('img')
                 img.setAttribute('src', this.state.dcCon[item.substring(1)])
+                img.setAttribute('title', item)
                 img.setAttribute('alt', item)
                 img.classList.add('dc-con')
                 return img.outerHTML
@@ -694,7 +695,7 @@ class Chatroom extends React.Component {
     // Ta-Da
     constructor(props) {
         super(props)
-        this.state = {chat: '', keymap: {}, users: {}, dcCon: {}, index: 0}
+        this.state = {chat: '', sendingChat: false, keymap: {}, users: {}, dcCon: {}, index: 0}
     }
 
     async componentWillReceiveProps(newProps) {
@@ -749,13 +750,21 @@ class Chatroom extends React.Component {
     }
 
     sendChat(e) {
+        if(this.state.sendingChat)
+            return
         if(this.state.chat.length != 0 && this.props.irc.readyState() == 'OPEN') {
+            this.setState({
+                sendingChat: true
+            })
             this.props.irc.say(this.props.irc.getChannels()[0], this.state.chat)
             document.querySelectorAll('#text-area textarea').forEach((item, index) => {
                 if(item.value == this.state.chat) {
                     item.value = ''
                     return false
                 }
+            })
+            this.setState({
+                sendingChat: false
             })
         }
     }

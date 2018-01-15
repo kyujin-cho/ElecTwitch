@@ -1,6 +1,6 @@
 {
   "name": "electwitch",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "Simple Twitch Viewer built with Electron.",
   "main": "index.js",
   "scripts": {
