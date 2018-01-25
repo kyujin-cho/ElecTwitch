@@ -47,7 +47,7 @@ class ChatApp extends React.Component {
 
         let cssURL = window.localStorage.getItem('cssURL')
         if(!cssURL) {
-            cssURL = '../stylesheets/index.css'
+            cssURL = '../stylesheets/chat.css'
             window.localStorage.setItem('cssURL', cssURL)
         }
 
@@ -262,7 +262,7 @@ class ChatApp extends React.Component {
             if(this.state.chat.startsWith('!!theme')) { 
                 let cssURL = this.state.chat.split(' ')[1]
                 if(cssURL == 'default')
-                    cssURL = '../stylesheets/index.css'
+                    cssURL = '../stylesheets/chat.css'
                 window.localStorage.setItem('cssURL', cssURL)
                 const stylesheet = document.getElementById('chat-theme')
                 stylesheet.setAttribute('href', cssURL)
@@ -291,7 +291,6 @@ class ChatApp extends React.Component {
                 <div id="chat_wrapper"></div>
                 <Card>
                     <CardContent>
-                        <div id="chat_wrapper"></div>
                         <div id="send-chat-card" style={{
                             textShadow: 'none'
                         }}>

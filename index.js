@@ -64,7 +64,6 @@ function createWindow() {
     }
     bothFocusRunning = true
     chatWin.focus()
-    win.focus()
     bothFocusRunning = false
     console.log('Now ' + bothFocusRunning)
   })
