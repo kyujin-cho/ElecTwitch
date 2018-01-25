@@ -19319,6 +19319,8 @@ module.exports = function (regExp, replace) {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
 var _react = __webpack_require__(2);
 
 var _react2 = _interopRequireDefault(_react);
@@ -19368,6 +19370,24 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 var _window$require = window.require('electron'),
     ipcRenderer = _window$require.ipcRenderer;
 
+var serialize = function serialize(obj) {
+    var str = [];
+    for (var p in obj) {
+        str.push(encodeURIComponent(p) + "=" + encodeURIComponent(obj[p]));
+    }return str.join("&");
+};
+
+var clone = function clone(obj) {
+    if (obj === null || (typeof obj === 'undefined' ? 'undefined' : _typeof(obj)) !== 'object') return obj;
+    var copy = obj.constructor();
+    for (var attr in obj) {
+        if (obj.hasOwnProperty(attr)) {
+            copy[attr] = obj[attr];
+        }
+    }
+    return copy;
+};
+
 var ChatApp = function (_React$Component) {
     _inherits(ChatApp, _React$Component);
 
@@ -19376,7 +19396,7 @@ var ChatApp = function (_React$Component) {
 
         var _this = _possibleConstructorReturn(this, (ChatApp.__proto__ || Object.getPrototypeOf(ChatApp)).call(this, props));
 
-        _this.state = { chatInfo: {}, dcCon: {}, irc: null };
+        _this.state = { chatInfo: {}, dcCon: {}, irc: null, chat: '', sendingChat: false, keymap: {}, users: {}, index: 0 };
         return _this;
     }
 
@@ -19384,30 +19404,72 @@ var ChatApp = function (_React$Component) {
         key: 'componentDidMount',
         value: function () {
             var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
-                var chatInfo, jsons, items, json, options;
+                var chatInfo, cssURL, stylesheet, irc, jsons, items;
                 return regeneratorRuntime.wrap(function _callee$(_context) {
                     while (1) {
                         switch (_context.prev = _context.next) {
                             case 0:
+                                ipcRenderer.send('register-chat-state-change', '');
                                 ipcRenderer.on('chat-state-changed', function () {
-                                    return document.location.reload();
+                                    return window.location.reload();
                                 });
-                                ipcRenderer.send('register-chat-state-change');
                                 chatInfo = ipcRenderer.sendSync('get-chat-info');
 
-                                console.log('Chat info');
-                                console.log(chatInfo);
+                                if (chatInfo) {
+                                    _context.next = 5;
+                                    break;
+                                }
 
+                                return _context.abrupt('return');
+
+                            case 5:
+                                cssURL = window.localStorage.getItem('cssURL');
+
+                                if (!cssURL) {
+                                    cssURL = '../stylesheets/index.css';
+                                    window.localStorage.setItem('cssURL', cssURL);
+                                }
+
+                                stylesheet = document.createElement('link');
+
+                                stylesheet.id = 'chat-theme';
+                                stylesheet.setAttribute('rel', 'stylesheet');
+                                stylesheet.setAttribute('href', cssURL);
+                                document.head.appendChild(stylesheet);
+
+                                irc = new _tmi2.default.client({
+                                    options: {
+                                        debug: true,
+                                        clientId: _secret2.default.api.clientId
+                                    },
+                                    connection: {
+                                        reconnect: false
+                                    },
+                                    identity: chatInfo.authInfo
+                                });
+
+
+                                irc.connect().then(function () {
+                                    if (chatInfo.streamer != '#') irc.join(chatInfo.streamer);
+                                }).catch(function (err) {
+                                    return console.error(err);
+                                });
+                                irc.on("message", function (channel, userstate, message, self) {
+                                    userstate.message = message;
+                                    this.addChat(userstate);
+                                }.bind(this));
+
+                                jsons = void 0;
                                 _context.t0 = chatInfo.streamer;
-                                _context.next = _context.t0 === 'yeokka' ? 8 : _context.t0 === 'funzinnu' ? 18 : 25;
+                                _context.next = _context.t0 === 'yeokka' ? 19 : _context.t0 === 'funzinnu' ? 29 : 36;
                                 break;
 
-                            case 8:
+                            case 19:
                                 console.log('Loading yeokka DCCon...');
-                                _context.next = 11;
+                                _context.next = 22;
                                 return _axios2.default.get('https://krynen.github.io/jsassist-custom-css/js/dccon_list.json');
 
-                            case 11:
+                            case 22:
                                 jsons = _context.sent;
                                 items = {};
 
@@ -19423,15 +19485,15 @@ var ChatApp = function (_React$Component) {
                                     dcCon: items
                                 });
 
-                                return _context.abrupt('break', 25);
+                                return _context.abrupt('break', 36);
 
-                            case 18:
+                            case 29:
                                 console.log('Loading funzinnu DCCon...');
-                                _context.next = 21;
+                                _context.next = 32;
                                 return _axios2.default.get('http://funzinnu.cafe24.com/stream/dccon.php');
 
-                            case 21:
-                                json = _context.sent;
+                            case 32:
+                                jsons = _context.sent;
 
 
                                 console.log(jsons.data);
@@ -19439,25 +19501,15 @@ var ChatApp = function (_React$Component) {
                                     dcCon: jsons.data
                                 });
 
-                                return _context.abrupt('break', 25);
+                                return _context.abrupt('break', 36);
 
-                            case 25:
+                            case 36:
                                 this.setState({
-                                    chatInfo: chatInfo
+                                    chatInfo: chatInfo,
+                                    irc: irc
                                 });
 
-                                options = {
-                                    options: {
-                                        debug: true,
-                                        clientId: _secret2.default.api.clientId
-                                    },
-                                    connection: {
-                                        reconnect: false
-                                    },
-                                    identity: {}
-                                };
-
-                            case 27:
+                            case 37:
                             case 'end':
                                 return _context.stop();
                         }
@@ -19623,7 +19675,15 @@ var ChatApp = function (_React$Component) {
                 this.setState({
                     sendingChat: true
                 });
-                this.state.irc.say(this.state.irc.getChannels()[0], this.state.chat);
+                if (this.state.chat.startsWith('!!theme')) {
+                    var cssURL = this.state.chat.split(' ')[1];
+                    if (cssURL == 'default') cssURL = '../stylesheets/index.css';
+                    window.localStorage.setItem('cssURL', cssURL);
+                    var stylesheet = document.getElementById('chat-theme');
+                    stylesheet.setAttribute('href', cssURL);
+                } else {
+                    this.state.irc.say(this.state.irc.getChannels()[0], this.state.chat);
+                }
                 document.querySelectorAll('#text-area textarea').forEach(function (item, index) {
                     if (item.value == _this5.state.chat) {
                         item.value = '';
@@ -19631,7 +19691,8 @@ var ChatApp = function (_React$Component) {
                     }
                 });
                 this.setState({
-                    sendingChat: false
+                    sendingChat: false,
+                    chat: ''
                 });
             }
         }
@@ -19640,7 +19701,9 @@ var ChatApp = function (_React$Component) {
         value: function render() {
             return _react2.default.createElement(
                 'div',
-                { id: 'chat' },
+                { id: 'chat', style: {
+                        background: 'grey'
+                    } },
                 _react2.default.createElement('div', { id: 'chat_wrapper' }),
                 _react2.default.createElement(
                     _Card2.default,
@@ -19651,7 +19714,9 @@ var ChatApp = function (_React$Component) {
                         _react2.default.createElement('div', { id: 'chat_wrapper' }),
                         _react2.default.createElement(
                             'div',
-                            { id: 'send-chat-card' },
+                            { id: 'send-chat-card', style: {
+                                    textShadow: 'none'
+                                } },
                             _react2.default.createElement(
                                 'div',
                                 { id: 'text-area' },
@@ -19662,7 +19727,7 @@ var ChatApp = function (_React$Component) {
                                 { id: 'send-button' },
                                 _react2.default.createElement(
                                     _Button2.default,
-                                    { id: 'send-chat', disabled: !this.state.irc, fab: true, color: 'primary', onClick: this.sendChat.bind(this) },
+                                    { id: 'send-chat', disabled: !this.state.irc, fab: true, color: 'accent', onClick: this.sendChat.bind(this) },
                                     _react2.default.createElement(_ModeEdit2.default, null)
                                 )
                             )
@@ -54659,4 +54724,3 @@ exports.default = ModeEdit;
 
 /***/ })
 /******/ ]);
-//# sourceMappingURL=chat.js.map

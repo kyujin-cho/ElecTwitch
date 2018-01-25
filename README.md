@@ -4,12 +4,6 @@
 Very simple, feature-less twitch viewer application.   
 Made with Electron and React.js. 
 
-## Electron 취약점 관련 
-- Electron 1.7.11 미만 버전에 적용되는 취약점이 [발견](https://electronjs.org/blog/protocol-handler-fix)되었습니다. ([이슈 링크](https://github.com/thy2134/ElecTwitch/issues/18))
-- 현재 소스코드를 완전히 갈아엎고 있어(사실상 새로 짜는 수준), 다음 커밋까지 시간이 좀 걸립니다. 가능하면 클론 후 electron만이라도 update하는 것을 권장합니다.
-
-
-
 ## Technical Specifications
 - Backend
   - None
@@ -65,9 +59,13 @@ You can use player even if not logged in, but you can't view/participate chats w
 - This program supports 2FA login. Just enter verification numbers as you login on twitch website, and then restart the program once you have completed your log in procedure.
 
 ### 한국어
-1. 위의 로그인 버튼을 이용해 로그인하세요. 로그인하지 않아도, 방송은 볼 수 있지만, 채팅을 보거나 채팅에 참여할 수 없습니다. 한번 로그인하고 나면 로그인 정보가 저장되니, 아이디와 비밀번호를 매번 입력할 필요가 없습니다.
+1. 위의 로그인 버튼을 이용해 로그인하세요. 로그인하지 않아도, 방송은 볼 수 있지만, 채팅을 보거나 채팅에 참여할 수 없습니다. 한번 로그인하고 나면, 자동으로 로그인됩니다.
 2. 밑의 + 버튼을 이용해 스트리머 채널로 이동하세요.
-3. [yeokka](https://twitch.tv/yeokka) 방에서는 '역가티콘' 이 이미지로 치환되어 보입니다.
+3. [yeokka](https://twitch.tv/yeokka) 채널 및 [funzinnu](https://twitch.tv/funzinnu)에서는 '디씨콘' 이 이미지로 치환되어 보입니다.
+
+### Chatroom Themes
+- You can apply BridgeBBCC compatible CSS chatroom theme by typing `!!theme <CSS URL>` on chat send area.
+- BridgeBBCC 호환 채팅 테마를 적용할 수 있습니다. 채팅창에 `!!theme <CSS URL>` 을 입력하세요.
 ## Limitations
 - Can't get chats while logged out. This is due to the limitation of Twitch IRC API - Twitch requires log in credential of user when entering chatroom.
 
@@ -75,4 +73,4 @@ You can use player even if not logged in, but you can't view/participate chats w
 - ~~Add support for Twitch's own emojis, such as BloodTrail or BibleThump.~~ Issue Resolved! Check update v0.0.3-alpha.
 - Add DC-con picker.
 - Add support for user badge.
-- Show stream status of user's following channels when logged in.
+- ~~Show stream status of user's following channels when logged in.~~

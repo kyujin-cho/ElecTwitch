@@ -117,4 +117,12 @@ ipcMain.on('register-chat-state-change', (event, arg) => {
 ipcMain.on('chatwin-status', (event, arg) => {
   event.sender.send(isChatOpen.toString())
   if(!isChatOpen) openChatWindow()
+  else chatWin.focus()
+})
+
+ipcMain.on('maximize', (event, arg) => {
+  const workAreaSize = electron.screen.getPrimaryDisplay().workAreaSize
+  win.setBounds({x: 0, y: 0, width: workAreaSize.width - 350, height: workAreaSize.height}, true)
+  chatWin.setBounds({x: workAreaSize.width - 350, y: 0, width: 350, height: workAreaSize.height}, true)
+  win.focus()
 })

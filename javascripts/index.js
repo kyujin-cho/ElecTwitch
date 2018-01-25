@@ -20279,6 +20279,8 @@ var _ModeEdit2 = _interopRequireDefault(_ModeEdit);
 
 var _GridList = __webpack_require__(754);
 
+var _GridList2 = _interopRequireDefault(_GridList);
+
 var _IconButton = __webpack_require__(758);
 
 var _IconButton2 = _interopRequireDefault(_IconButton);
@@ -20362,7 +20364,15 @@ var App = function (_React$Component) {
                                     });
                                 }
 
-                            case 6:
+                                if (!(localStorage.getItem('Username') != null)) {
+                                    _context.next = 9;
+                                    break;
+                                }
+
+                                _context.next = 9;
+                                return this.tryLogin();
+
+                            case 9:
                             case 'end':
                                 return _context.stop();
                         }
@@ -20527,7 +20537,7 @@ var App = function (_React$Component) {
                                                         _context2.next = 49;
                                                         return _axios2.default.get('https://api.twitch.tv/helix/users?id=' + follow_streams.map(function (item) {
                                                             return item.user_id;
-                                                        }), {
+                                                        }).join('&id='), {
                                                             headers: {
                                                                 'Client-ID': _secret2.default.api.clientId
                                                             }
@@ -20615,7 +20625,7 @@ var App = function (_React$Component) {
                     while (1) {
                         switch (_context4.prev = _context4.next) {
                             case 0:
-                                res = ipcRenderer.sendSync('set-chat-info', {
+                                res = ipcRenderer.send('set-chat-info', {
                                     authInfo: localStorage.getItem('OAuth-Token') !== null ? {
                                         username: localStorage.getItem('Username'),
                                         password: "oauth:" + localStorage.getItem('OAuth-Token')
@@ -20902,6 +20912,16 @@ var App = function (_React$Component) {
             });
         }
     }, {
+        key: 'openChatIfClosed',
+        value: function openChatIfClosed(e) {
+            ipcRenderer.send('chatwin-status');
+        }
+    }, {
+        key: 'maximize',
+        value: function maximize(e) {
+            ipcRenderer.send('maximize');
+        }
+    }, {
         key: 'render',
         value: function render() {
             return _react2.default.createElement(
@@ -20920,7 +20940,17 @@ var App = function (_React$Component) {
                         ),
                         _react2.default.createElement(
                             _Button2.default,
-                            { color: 'secondary', id: 'login-button', onClick: this.tryLogin.bind(this) },
+                            { color: 'contrast', id: 'maximize-button', onClick: this.maximize.bind(this) },
+                            'Maximize Window'
+                        ),
+                        _react2.default.createElement(
+                            _Button2.default,
+                            { color: 'contrast', id: 'open-chat-window-button', onClick: this.openChatIfClosed.bind(this) },
+                            'Open Chat Window'
+                        ),
+                        _react2.default.createElement(
+                            _Button2.default,
+                            { color: 'contrast', id: 'login-button', onClick: this.tryLogin.bind(this) },
                             'Login'
                         )
                     )
@@ -21192,7 +21222,20 @@ var FollowStreams = function (_React$Component3) {
                 _react2.default.createElement(
                     _Paper2.default,
                     { className: 'paper', elevation: 4 },
-                    _react2.default.createElement('div', { className: 'inside' })
+                    _react2.default.createElement(
+                        'div',
+                        { className: 'inside' },
+                        _react2.default.createElement(
+                            _Typography2.default,
+                            { type: 'headline', component: 'h2' },
+                            'Follows'
+                        ),
+                        _react2.default.createElement(
+                            _GridList2.default,
+                            { className: 'gridList', cols: 2.5 },
+                            div
+                        )
+                    )
                 )
             );
         }
@@ -83430,4 +83473,3 @@ var substr = 'ab'.substr(-1) === 'b'
 
 /***/ })
 /******/ ]);
-//# sourceMappingURL=index.js.map
