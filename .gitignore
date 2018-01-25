@@ -245,4 +245,6 @@ gradle-app.setting
 dist
 dist/*
 secret.js
+
 react/*
+javascripts/*
