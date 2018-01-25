@@ -9,9 +9,25 @@ const {ipcMain} = electron;
 
 const secret = require('./secret')
 
+let isChatOpen = false
+
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
 let win, chatWin;
+
+function openChatWindow() {
+  isChatOpen = true
+  chatWin = new BrowserWindow({width: 250, height: 750});
+  chatWin.loadURL('file://' + __dirname + '/views/chat.html');
+  chatWin.on('closed', () =>  {
+    isChatOpen = false
+    console.log('Chat window closed')
+  })
+
+  const mainWindowBound = win.getBounds();
+
+  chatWin.setBounds({x:mainWindowBound.x + 930, y:mainWindowBound.y, width:250, height:750});
+}
 
 function createWindow() {  
   // Create the browser window.
@@ -31,18 +47,29 @@ function createWindow() {
     e.preventDefault()
     require('electron').shell.openExternal(url)
   }
-  chatWin = new BrowserWindow({width: 250, height: 750});
-  chatWin.loadURL('file://' + __dirname + '/views/chat.html');
+  
   
   win.webContents.on('will-navigate', handleRedirect)
   win.webContents.on('new-window', handleRedirect)
+  let bothFocusRunning = false
+  win.on('focus', () => {
+    console.log(bothFocusRunning)
+    if(bothFocusRunning) {
+      return
+    }
+    bothFocusRunning = true
+    chatWin.focus()
+    win.focus()
+    bothFocusRunning = false
+    console.log('Now ' + bothFocusRunning)
+  })
 
   win.focus()
-  const mainWindowBound = win.getBounds();
 
-  chatWin.setBounds({x:mainWindowBound.x + 930, y:mainWindowBound.y, width:250, height:750});
-
+  openChatWindow()
 }
+
+
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
@@ -87,3 +114,7 @@ ipcMain.on('register-chat-state-change', (event, arg) => {
   sender = event.sender
 })
 
+ipcMain.on('chatwin-status', (event, arg) => {
+  event.sender.send(isChatOpen.toString())
+  if(!isChatOpen) openChatWindow()
+})

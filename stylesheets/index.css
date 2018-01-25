@@ -10,15 +10,7 @@ div#player button {
 }
 
 #main {
-    float: left;
-    width: calc(70% - 20px);
-}
-
-#chat-area { 
-    float: right;
-    width: 30%;
-    max-width: 400px;
-    margin: 10px;
+    margin: auto;
 }
 
 #send-chat-card {
@@ -157,6 +149,8 @@ titleBar {
 .following-streams {
     margin-top: 10px;
     margin-left: 10px;
+    margin-right: 10px;
+    
 }
 
 .following-streams .inside {
