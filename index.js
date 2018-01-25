@@ -57,6 +57,7 @@ function createWindow() {
   win.webContents.on('will-navigate', handleRedirect)
   win.webContents.on('new-window', handleRedirect)
   let bothFocusRunning = false
+  let block = false
   win.on('focus', () => {
     console.log(bothFocusRunning)
     if(bothFocusRunning) {
@@ -64,7 +65,8 @@ function createWindow() {
     }
     bothFocusRunning = true
     chatWin.focus()
-    bothFocusRunning = false
+    win.focus()
+    setTimeout(() => bothFocusRunning = false, 100)
     console.log('Now ' + bothFocusRunning)
   })
 
