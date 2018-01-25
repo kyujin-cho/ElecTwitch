@@ -246,5 +246,4 @@ dist
 dist/*
 secret.js
 
-react/*
 javascripts/*
