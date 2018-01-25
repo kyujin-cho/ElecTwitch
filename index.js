@@ -9,18 +9,16 @@ const {ipcMain} = electron;
 
 const secret = require('./secret')
 
-let isChatOpen = false
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
 let win, chatWin;
 
 function openChatWindow() {
-  isChatOpen = true
   chatWin = new BrowserWindow({width: 250, height: 750});
   chatWin.loadURL('file://' + __dirname + '/views/chat.html');
   chatWin.on('closed', () =>  {
-    isChatOpen = false
+    chatWin = null
     console.log('Chat window closed')
   })
 
@@ -47,6 +45,7 @@ function createWindow() {
     // in an array if your app supports multi windows, this is the time
     // when you should delete the corresponding element.
     win = null;
+    chatWin.close()
   });
   const handleRedirect = (e, url) => {
     e.preventDefault()
@@ -66,7 +65,7 @@ function createWindow() {
     bothFocusRunning = true
     chatWin.focus()
     win.focus()
-    setTimeout(() => bothFocusRunning = false, 100)
+    setInterval(() => bothFocusRunning = false, 100)
     console.log('Now ' + bothFocusRunning)
   })
 
@@ -122,8 +121,8 @@ ipcMain.on('register-chat-state-change', (event, arg) => {
 })
 
 ipcMain.on('chatwin-status', (event, arg) => {
-  event.sender.send(isChatOpen.toString())
-  if(!isChatOpen) openChatWindow()
+  event.sender.send(chatWin != null)
+  if(chatWin != null) openChatWindow()
   else chatWin.focus()
 })
 
