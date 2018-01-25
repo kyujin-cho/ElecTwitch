@@ -4,6 +4,12 @@
 Very simple, feature-less twitch viewer application.   
 Made with Electron and React.js. 
 
+## Electron 취약점 관련 
+- Electron 1.7.11 미만 버전에 적용되는 취약점이 [발견](https://electronjs.org/blog/protocol-handler-fix)되었습니다. ([이슈 링크](https://github.com/thy2134/ElecTwitch/issues/18))
+- 현재 소스코드를 완전히 갈아엎고 있어(사실상 새로 짜는 수준), 다음 커밋까지 시간이 좀 걸립니다. 가능하면 클론 후 electron만이라도 update하는 것을 권장합니다.
+
+
+
 ## Technical Specifications
 - Backend
   - None
