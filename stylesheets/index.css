@@ -1,0 +1,164 @@
+body {
+    font-family: "Roboto", "SeoulNamsan", sans-serif;
+    background-color: #eeeeee;
+    margin: 0px;
+    min-width: 360px;
+}
+
+div#player button {
+    display: none;
+}
+
+#main {
+    float: left;
+    width: calc(70% - 20px);
+}
+
+#chat-area { 
+    float: right;
+    width: 30%;
+    max-width: 400px;
+    margin: 10px;
+}
+
+#send-chat-card {
+    height: 100%;
+    display: inline-block;
+    width: 100%;
+}
+
+#send-chat-card #text-area {
+    float: left;
+    width: 75%;
+}
+
+#send-chat-card #send-button {
+    float: right;
+    width: 20%;
+}
+
+#chat_wrapper {
+    white-space: normal;
+    overflow: scroll;
+    height: 500px;
+}
+
+#open-stream {
+    position: fixed;
+    bottom: 15px;
+    right: 15px;
+    z-index: 2;
+}
+
+.error {
+    color: #F44336;
+}
+.hidden {
+    display: none;
+}
+
+#streamer-input {
+    margin-right: auto;
+    margin-left: auto;
+}
+
+#streamer-info {
+    display: flex;
+    flex-direction: column;
+    width: calc(100% - 125px);
+    float: left;
+    margin-left: 10px;
+}
+
+.profile-photo {
+    width: 94px;
+    float: right;
+    margin-right: 10px;
+}
+
+.icon-right {
+    margin-left: 10px;
+}
+
+#title-area.streamer-on {
+    color: #4CAF50;
+}
+
+#title-area.streamer-off {
+    color: #F44336;
+}
+
+.chat_nickname_box.mine { 
+    color: #2196F3;
+}
+
+.chat_nickname_box.others {
+    color: #4CAF50;
+}
+
+.chat_nickname_box.others.color-1 { 
+    color: #4CAF50;
+}
+.chat_nickname_box.others.color-2 { 
+    color: #3F51B5;
+}
+.chat_nickname_box.others.color-3 { 
+    color: #009688;
+}
+.chat_nickname_box.others.color-4 { 
+    color: #CDDC39;
+}
+.chat_nickname_box.others.color-5 { 
+    color: #FF9800;
+}
+.chat_nickname_box.others.color-6 { 
+    color: #FF5722;
+}
+.chat_nickname_box.others.color-7 { 
+    color: #E91E63;
+}
+
+
+span.chat_nickname_box, .chat_msg_box {
+    font-size: 13px;
+}
+
+.notice {
+    font-size: 11px;
+    color: grey;
+}
+
+div#chat_wrapper > div {
+    margin-bottom: 5px;
+}
+
+img.dccon {
+    width: 70px;
+    height: 70px;
+}
+
+root {
+    display: 'flex';
+    flex-wrap: 'wrap';
+    justify-content: 'space-around';
+    overflow: 'hidden';
+  }
+gridList {
+    flex-wrap: 'nowrap';
+    transform: 'translateZ(0)';
+}
+title {
+}
+titleBar {
+    background:
+    'linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.3) 70%, rgba(0,0,0,0) 100%)';
+}
+
+.following-streams {
+    margin-top: 10px;
+    margin-left: 10px;
+}
+
+.following-streams .inside {
+    margin: 10px;
+}
