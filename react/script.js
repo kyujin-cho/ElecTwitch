@@ -53,7 +53,7 @@ const clone = function(obj) {
 class App extends React.Component {
     constructor(props) {
         super(props)
-        this.state = {streamerName: '', follow_streams: [], dcCon: {}, updateOpen: false, users: {}, client: null, chats: [], title: 'ElecTwitch', error: '', isLoaded: false, streamOn: false, accessToken: {}, streamInfo: {}, sig: '', dialogOpen: false}
+        this.state = {streamerName: '', isChatFollowing: false, follow_streams: [], dcCon: {}, updateOpen: false, users: {}, client: null, chats: [], title: 'ElecTwitch', error: '', isLoaded: false, streamOn: false, accessToken: {}, streamInfo: {}, sig: '', dialogOpen: false}
     }
 
     async componentDidMount() {
@@ -391,6 +391,14 @@ class App extends React.Component {
         ipcRenderer.send('maximize')
     }
 
+    followChatWindow(e) {
+        const result = ipcRenderer.sendSync('switch-chat-follow')
+        console.log(result)
+        this.setState({
+            isChatFollowing: result == 'true'
+        })
+    }
+
     render() {
         return (
             <div>
@@ -402,6 +410,7 @@ class App extends React.Component {
                     <Typography id="title-area" type="title" color="inherit" style={{flex: 1}}>
                         {this.state.title}
                     </Typography>
+                    <Button color="contrast" id="turn-follow-on-off-button" onClick={this.followChatWindow.bind(this)} >{this.state.isChatFollowing ? "Stop chat window from following Player": "Make chat window follow Player"} </Button>
                     <Button color="contrast" id="maximize-button" onClick={this.maximize.bind(this)} >Maximize Window</Button>
                     <Button color="contrast" id="open-chat-window-button" onClick={this.openChatIfClosed.bind(this)} >Open Chat Window</Button>
                     <Button color="contrast" id="login-button" onClick={this.tryLogin.bind(this)} >Login</Button>

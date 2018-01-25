@@ -29,6 +29,11 @@ function openChatWindow() {
   chatWin.setBounds({x:mainWindowBound.x + 930, y:mainWindowBound.y, width:250, height:750});
 }
 
+function followPlayer() {
+  const bounds = win.getBounds()
+  chatWin.setBounds({x: bounds.x + bounds.width, y: bounds.y, width: chatWin.getBounds().width, height: bounds.height})
+}
+
 function createWindow() {  
   // Create the browser window.
   win = new BrowserWindow({width: 930, height: 750});
@@ -95,6 +100,7 @@ app.on('activate', () => {
 
 let chatInfo = {}
 let sender = null
+let followActivated = false
 
 ipcMain.on('set-chat-info', (event, arg) => {
   chatInfo = arg
@@ -125,4 +131,17 @@ ipcMain.on('maximize', (event, arg) => {
   win.setBounds({x: 0, y: 0, width: workAreaSize.width - 350, height: workAreaSize.height}, true)
   chatWin.setBounds({x: workAreaSize.width - 350, y: 0, width: 350, height: workAreaSize.height}, true)
   win.focus()
+})
+
+ipcMain.on('switch-chat-follow', (event, arg) => {
+  if(followActivated) {
+    win.removeListener('move', followPlayer)
+    win.removeListener('resize', followPlayer)
+  } else {
+    win.on('move', followPlayer)
+    win.on('resize', followPlayer)
+    followPlayer()
+  }
+  followActivated = !followActivated
+  event.returnValue = followActivated.toString()
 })
