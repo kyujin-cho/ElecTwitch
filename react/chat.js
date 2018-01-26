@@ -261,12 +261,42 @@ class ChatApp extends React.Component {
             })
             if(this.state.chat.startsWith('!!theme')) { 
                 let cssURL = this.state.chat.split(' ')[1]
-                if(cssURL == 'default')
-                    cssURL = '../stylesheets/chat.css'
+                let themes = window.localStorage.getItem('theme')
+                let keyword = null
+                if(themes)
+                    themes = JSON.parse(themes)
+                else
+                    themes = {'default': '../stylesheets/bridgebbcc_default.css'}
+
+                if(themes[cssURL]) {
+                    keyword = cssURL
+                    cssURL = themes[cssURL]
+                }
                 window.localStorage.setItem('cssURL', cssURL)
                 const stylesheet = document.getElementById('chat-theme')
+                
+                this.addChat({'username': 'Internal Service', 'message': `Loaded theme ${keyword ? keyword : cssURL}.`})
                 stylesheet.setAttribute('href', cssURL)
-
+            } else if (this.state.chat.startsWith('!!setTheme')) {
+                if(this.state.chat.split(' ').length < 3) {
+                    this.addChat({'username': 'Internal Service', 'message': 'Invalid argument supplied for setTheme command.'})
+                } else {
+                    let keyword = this.state.chat.split(' ')[1]
+                    let url = this.state.chat.split(' ')[2]
+                    let themes = window.localStorage.getItem('theme')
+                    if(themes)
+                        themes = JSON.parse(themes)
+                    else
+                        themes = {'default': '../stylesheets/bridgebbcc_default.css'}
+    
+                    if(keyword == 'default') {
+                        this.addChat({'username': 'Internal Service', 'message': 'Cannot use "default" as theme preset - reserved keyword. '})
+                    } else {
+                        themes[keyword] = url
+                        window.localStorage.setItem('theme', JSON.stringify(themes))
+                        this.addChat({'username': 'Internal Service', 'message': `Updated theme ${keyword}.`})        
+                    }                    
+                }
             } else {
                 this.state.irc.say(this.state.irc.getChannels()[0], this.state.chat)
             }
