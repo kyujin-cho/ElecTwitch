@@ -45,6 +45,7 @@ function createWindow() {
     // in an array if your app supports multi windows, this is the time
     // when you should delete the corresponding element.
     win = null;
+    if(chatWin)
     chatWin.close()
   });
   const handleRedirect = (e, url) => {
@@ -58,12 +59,12 @@ function createWindow() {
   let bothFocusRunning = false
   let block = false
   win.on('focus', () => {
+    if(chatWin == null) return
     console.log(bothFocusRunning)
     if(bothFocusRunning) {
       return
     }
     bothFocusRunning = true
-    chatWin.focus()
     win.focus()
     setInterval(() => bothFocusRunning = false, 100)
     console.log('Now ' + bothFocusRunning)
@@ -105,7 +106,7 @@ let followActivated = false
 ipcMain.on('set-chat-info', (event, arg) => {
   chatInfo = arg
   console.log('chat info set')
-  if(sender)
+  if(sender && chatWin)
     sender.send('chat-state-changed')
   event.returnValue = 'Done'
 })
@@ -121,15 +122,20 @@ ipcMain.on('register-chat-state-change', (event, arg) => {
 })
 
 ipcMain.on('chatwin-status', (event, arg) => {
-  event.sender.send(chatWin != null)
-  if(chatWin != null) openChatWindow()
+  event.sender.send((chatWin != null).toString())
+  if(chatWin == null) openChatWindow()
   else chatWin.focus()
 })
 
 ipcMain.on('maximize', (event, arg) => {
   const workAreaSize = electron.screen.getPrimaryDisplay().workAreaSize
-  win.setBounds({x: 0, y: 0, width: workAreaSize.width - 350, height: workAreaSize.height}, true)
-  chatWin.setBounds({x: workAreaSize.width - 350, y: 0, width: 350, height: workAreaSize.height}, true)
+  if(chatWin) {
+    win.setBounds({x: 0, y: 0, width: workAreaSize.width - 350, height: workAreaSize.height}, true)
+    chatWin.setBounds({x: workAreaSize.width - 350, y: 0, width: 350, height: workAreaSize.height}, true)
+  } else {
+    win.setBounds({x: 0, y: 0, width: workAreaSize.width, height: workAreaSize.height}, true)
+  }
+    
   win.focus()
 })
 
