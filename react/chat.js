@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom'
 import axios from 'axios'
 import tmi from 'tmi.js'
 import secret from '../secret'
+import linkifyUrls from 'linkify-urls'
 
 import Button from '../node_modules/material-ui/Button'
 import TextField from '../node_modules/material-ui/TextField'
@@ -73,6 +74,12 @@ class ChatApp extends React.Component {
                 irc.join(chatInfo.streamer)
           })
           .catch(err => console.error(err))
+        irc.on('notice', (function(channel, msgid, message) {
+            console.log('notice from ' + channel)
+            console.log('#' + msgid)
+            console.log(message)
+            this.addChat({'username': 'Twitch System', 'message': message})
+        }).bind(this))
         irc.on("message", (function (channel, userstate, message, self) {
             userstate.message = message
             this.addChat(userstate)
@@ -142,6 +149,7 @@ class ChatApp extends React.Component {
 
     addChat(item) {
         console.log(item)
+        item.message = linkifyUrls(item.message)
         // console.log('addChat Fired')
         let body = document.createElement('div')
         body.classList.add('chat_outer_box')

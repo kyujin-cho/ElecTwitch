@@ -21,6 +21,14 @@ function openChatWindow() {
     chatWin = null
     console.log('Chat window closed')
   })
+  const handleRedirect = (e, url) => {
+    if(url.startsWith('file://')) return
+    e.preventDefault()
+    require('electron').shell.openExternal(url)
+  }
+
+  chatWin.webContents.on('will-navigate', handleRedirect)
+  chatWin.webContents.on('new-window', handleRedirect)
 
   const mainWindowBound = win.getBounds();
 
@@ -52,7 +60,6 @@ function createWindow() {
     e.preventDefault()
     require('electron').shell.openExternal(url)
   }
-  
   
   win.webContents.on('will-navigate', handleRedirect)
   win.webContents.on('new-window', handleRedirect)
