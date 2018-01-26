@@ -65,12 +65,19 @@ You can use player even if not logged in, but you can't view/participate chats w
 
 ### Chatroom Themes
 - You can apply BridgeBBCC compatible CSS chatroom theme by typing `!!theme <CSS URL>` on chat send area.
+- Save theme presets by typing `!!setTheme <presetName> <cssURL>` on chatroom. Load chat preset by typing `!!theme <presetName>`. 
+- Revert to default preset by `!!theme default` .
+- Keyword `default` can't be used as a preset name, since it's a reserved word.
+#### 한국어
 - BridgeBBCC 호환 채팅 테마를 적용할 수 있습니다. 채팅창에 `!!theme <CSS URL>` 을 입력하세요.
+- `!!setTheme <프리셋명> <CSSURL>` 로 테마 프리셋을 설정할 수 있습니다.
+- `!!theme <프리셋>`으로 설정한 프리셋을 불러올 수 있습니다. 
+- `!!theme default` 로 기본 테마로 돌아갈 수 있습니다.
 ## Limitations
 - Can't get chats while logged out. This is due to the limitation of Twitch IRC API - Twitch requires log in credential of user when entering chatroom.
 
 ## TO-DOs
 - ~~Add support for Twitch's own emojis, such as BloodTrail or BibleThump.~~ Issue Resolved! Check update v0.0.3-alpha.
 - Add DC-con picker.
-- Add support for user badge.
+- ~~Add support for user badge.~~
 - ~~Show stream status of user's following channels when logged in.~~
