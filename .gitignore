@@ -245,5 +245,6 @@ gradle-app.setting
 dist
 dist/*
 secret.js
-
+package-lock.json
 javascripts/*
+
