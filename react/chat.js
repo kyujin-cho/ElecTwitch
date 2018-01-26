@@ -36,7 +36,7 @@ const clone = function(obj) {
 class ChatApp extends React.Component {
     constructor(props) {
         super(props)
-        this.state = {chatInfo: {}, dcCon: {}, irc: null, chat: '', sendingChat: false, keymap: {}, users: {}, index: 0}
+        this.state = {chatInfo: {}, dcCon: {}, badges: {}, irc: null, chat: '', sendingChat: false, keymap: {}, users: {}, index: 0}
     }
 
     async componentDidMount() {
@@ -89,11 +89,9 @@ class ChatApp extends React.Component {
                 jsons = jsons.data
                 jsons.dccons.forEach((item) => {
                     item.keywords.forEach((kwd) => {
-                        console.log(kwd + ':' + item.path)
                         items[kwd] = item.path
                     })
                 })
-                console.log(items)
                 this.setState({
                     dcCon: items
                 })
@@ -103,7 +101,6 @@ class ChatApp extends React.Component {
                 console.log('Loading funzinnu DCCon...')
                 jsons = await axios.get('http://funzinnu.cafe24.com/stream/dccon.php')
 
-                console.log(jsons.data)
                 this.setState({
                     dcCon: jsons.data
                 })
@@ -111,6 +108,20 @@ class ChatApp extends React.Component {
             
                 break;
         }
+        if(chatInfo.streamer != '#') {
+            console.log('Loading badge for ' +chatInfo.streamer + '...')
+            let userId = await axios.get('https://api.twitch.tv/helix/users?login=' + chatInfo.streamer, {headers: {'Client-ID': 'azoulwf5023j77d8qbuhidthgw9pg9'}})
+            userId = userId.data.data[0].id
+            let channelBadges = await axios.get(`https://badges.twitch.tv/v1/badges/channels/${userId}/display`)
+            channelBadges = channelBadges.data.badge_sets
+            let globalBadges = await axios.get('https://badges.twitch.tv/v1/badges/global/display')
+            globalBadges = globalBadges.data.badge_sets
+            this.setState({
+                badges: Object.assign({}, globalBadges, channelBadges)
+            })
+
+        }
+
         this.setState({
             chatInfo: chatInfo,
             irc: irc
@@ -130,7 +141,7 @@ class ChatApp extends React.Component {
     }
 
     addChat(item) {
-        // console.log(item)
+        console.log(item)
         // console.log('addChat Fired')
         let body = document.createElement('div')
         body.classList.add('chat_outer_box')
@@ -146,7 +157,6 @@ class ChatApp extends React.Component {
         
         let badge_box = document.createElement('div')
         badge_box.classList.add('chat_badge_box')
-        badge_box.classList.add('empty') // Will be implemented later
 
         upper_box.appendChild(nickname_box)
         upper_box.appendChild(badge_box)
@@ -159,29 +169,38 @@ class ChatApp extends React.Component {
 
         if(item['emotes-raw']) {
             item['emotes-raw'] = item['emotes-raw'].split('/')
-            console.log(item['emotes-raw'])
-            if(item['emote-only']) {
-                item.message = item['emotes-raw'].map((item, index) => {
-                    const emote = [item.split(':')[0]].concat(parseInt(item.split(':')[1].split('-')[0])).concat(parseInt(item.split(':')[1].split('-')[1]))
-                    let img = document.createElement('img')
-                    img.setAttribute('src', `https://static-cdn.jtvnw.net/emoticons/v1/${emote[0]}/1.0`)
-                    img.setAttribute('alt', emote[0])
-                    img.classList.add('twitch_emote')
-                    return img.outerHTML
-                }).join(' ')
-            } else {
-                item['emotes-raw'].forEach((item, index) => {
-                    const emote = [item.split(':')[0]].concat(parseInt(item.split(':')[1].split('-')[0])).concat(parseInt(item.split(':')[1].split('-')[1]))
-                    
-                    console.log(emote)
-                    let img = document.createElement('img')
-                    img.setAttribute('src', `https://static-cdn.jtvnw.net/emoticons/v1/${emote[0]}/1.0`)
-                    if(item.message)
-                        img.setAttribute('alt', item.message.substring(emote[1], emote[2] + 1))
-                    img.classList.add('twitch_emote')
-                    item.message = this.replaceRange(item.message, emote[1], emote[2] + 1, img.outerHTML)
-                })
+            let emojis = {}
+            for(var key in item['emotes-raw']) {
+                item['emotes-raw'][key].split(':')[1].split(',').forEach(range => 
+                    emojis[item.message.substring(parseInt(range.split('-')[0]), parseInt(range.split('-')[1]) + 1)] = 
+                        item['emotes-raw'][key].split(':')[0]
+                )
             }
+
+            const emojiKeys = Object.keys(emojis)
+            item.message = item.message.split(' ').map((item, index) => {
+                if(item.indexOf(emojiKeys) != -1) {
+                    let img = document.createElement('img')
+                    img.setAttribute('src', `https://static-cdn.jtvnw.net/emoticons/v1/${emojis[item]}/1.0`)
+                    img.setAttribute('alt', emojis[item])
+                    img.classList.add('twitch_emote')
+                    return img.outerHTML    
+                } else {
+                    return item
+                }
+            }).join(' ')
+        
+        }
+
+        if(item['badges-raw']) {
+            badge_box.innerHTML = item['badges-raw'].split(',').map(item => {
+                let img = document.createElement('img')
+                console.log(this.state.badges[item.split('/')[0]])
+                console.log(item)
+                img.setAttribute('src', this.state.badges[item.split('/')[0]].versions[item.split('/')[1]].image_url_4x)
+                img.setAttribute('alt', this.state.badges[item.split('/')[0]].versions[item.split('/')[1]].description)
+                return img.outerHTML
+            }).join(' ')
         }
         const scrollDiff = document.getElementById('chat').scrollHeight - document.getElementById('chat').scrollTop
         
