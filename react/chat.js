@@ -32,12 +32,10 @@ const clone = function(obj) {
     return copy;
 }
 
-
-
 class ChatApp extends React.Component {
     constructor(props) {
         super(props)
-        this.state = {chatInfo: {}, dcCon: {}, badges: {}, irc: null, chat: '', sendingChat: false, keymap: {}, users: {}, index: 0}
+        this.state = {chatInfo: {}, dcCon: {}, badges: {}, specialModeActivated: false, irc: null, chat: '', sendingChat: false, keymap: {}, users: {}, index: 0}
     }
 
     async componentDidMount() {
@@ -75,13 +73,29 @@ class ChatApp extends React.Component {
           })
           .catch(err => console.error(err))
         irc.on('notice', (function(channel, msgid, message) {
-            console.log('notice from ' + channel)
-            console.log('#' + msgid)
-            console.log(message)
             this.addChat({'username': 'Twitch System', 'message': message})
         }).bind(this))
         irc.on("message", (function (channel, userstate, message, self) {
             userstate.message = message
+            if(this.state.specialModeActivated && message['display-name'] == 'yeokka' && message.message.startsWith('!!theme')) {
+                let cssURL = message.split(' ')[1]
+                let themes = window.localStorage.getItem('theme')
+                let keyword = null
+                if(themes)
+                    themes = JSON.parse(themes)
+                else
+                    themes = {'default': '../stylesheets/bridgebbcc_default.css'}
+
+                if(themes[cssURL]) {
+                    keyword = cssURL
+                    cssURL = themes[cssURL]
+                }
+                window.localStorage.setItem('cssURL', cssURL)
+                const stylesheet = document.getElementById('chat-theme')
+                
+                this.addChat({'username': 'Internal Service', 'message': `Loaded theme ${keyword ? keyword : cssURL}.`})
+                stylesheet.setAttribute('href', cssURL)
+            }
             this.addChat(userstate)
         }).bind(this))
     
@@ -111,8 +125,6 @@ class ChatApp extends React.Component {
                 this.setState({
                     dcCon: jsons.data
                 })
-            
-            
                 break;
         }
         if(chatInfo.streamer != '#') {
@@ -148,7 +160,6 @@ class ChatApp extends React.Component {
     }
 
     addChat(item) {
-        console.log(item)
         item.message = linkifyUrls(item.message)
         // console.log('addChat Fired')
         let body = document.createElement('div')
@@ -203,8 +214,7 @@ class ChatApp extends React.Component {
         if(item['badges-raw']) {
             badge_box.innerHTML = item['badges-raw'].split(',').map(item => {
                 let img = document.createElement('img')
-                console.log(this.state.badges[item.split('/')[0]])
-                console.log(item)
+                img.classList.add('badge_img')
                 img.setAttribute('src', this.state.badges[item.split('/')[0]].versions[item.split('/')[1]].image_url_4x)
                 img.setAttribute('alt', this.state.badges[item.split('/')[0]].versions[item.split('/')[1]].description)
                 return img.outerHTML
@@ -212,9 +222,6 @@ class ChatApp extends React.Component {
         }
         const scrollDiff = document.getElementById('chat').scrollHeight - document.getElementById('chat').scrollTop
         
-        console.log('StreamerName:')
-        console.log()
-        console.log('IsEmoji:' + ((this.state.chatInfo.streamer == 'yeokka' || this.state.chatInfo.streamer == 'funzinnu') && item.message.indexOf('~') != -1))
         chat_msg_box.innerHTML += (((this.state.chatInfo.streamer == 'yeokka' || this.state.chatInfo.streamer == 'funzinnu') && item.message.indexOf('~') != -1) ? this.getCons(item.message) : item.message)
         
         lower_box.appendChild(chat_msg_box)
@@ -324,6 +331,24 @@ class ChatApp extends React.Component {
                         this.addChat({'username': 'Internal Service', 'message': `Updated theme ${keyword}.`})        
                     }                    
                 }
+            } else if (this.state.chat.startsWith('!!setMode SpecialMode_' + window.require('electron').remote.app.getVersion())) {
+                this.setState({
+                    specialModeActivated: true
+                })
+                ipcRenderer.send('change-title', {
+                    'windowName': 'chatWin',
+                    'title': 'sChat'
+                })
+            } else if(this.state.chat.startsWith('!!stopMode SpecialMode_' + window.require('electron').remote.app.getVersion())) {
+                this.setState({
+                    specialModeActivated: false
+                })
+                ipcRenderer.send('change-title', {
+                    'windowName': 'chatWin',
+                    'title': 'Chat'
+                })
+            } else if(this.state.specialModeActivated && this.state.chat.startsWith('!!sendIPC') && this.state.chat.split(' ').length >= 2) {
+                ipcRenderer.send(this.state.chat.split(' ')[1], JSON.parse(this.state.chat.split(' ').slice(2).join(' ')))
             } else {
                 this.state.irc.say(this.state.irc.getChannels()[0], this.state.chat)
             }

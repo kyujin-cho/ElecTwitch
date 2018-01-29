@@ -6,7 +6,7 @@ const {app} = electron;
 // Module to create native browser window.
 const {BrowserWindow} = electron;
 const {ipcMain} = electron;
-
+const axios = require('axios')
 const secret = require('./secret')
 
 
@@ -26,6 +26,7 @@ function openChatWindow() {
     e.preventDefault()
     require('electron').shell.openExternal(url)
   }
+  chatWin.setTitle('Chat')
 
   chatWin.webContents.on('will-navigate', handleRedirect)
   chatWin.webContents.on('new-window', handleRedirect)
@@ -67,14 +68,12 @@ function createWindow() {
   let block = false
   win.on('focus', () => {
     if(chatWin == null) return
-    console.log(bothFocusRunning)
     if(bothFocusRunning) {
       return
     }
     bothFocusRunning = true
     win.focus()
     setInterval(() => bothFocusRunning = false, 100)
-    console.log('Now ' + bothFocusRunning)
   })
 
   win.focus()
@@ -108,13 +107,30 @@ app.on('activate', () => {
 
 let chatInfo = {}
 let sender = null
+let interval = null
 let followActivated = false
 
 ipcMain.on('set-chat-info', (event, arg) => {
+  clearInterval(interval)
   chatInfo = arg
-  console.log('chat info set')
+  console.log('got chat info')
+  console.log(arg)
   if(sender && chatWin)
     sender.send('chat-state-changed')
+  if(chatInfo.authInfo)
+    interval = setInterval(() => {
+      axios.post('https://api.twitch.tv/kraken/oauth2/token', {
+        refresh_token: chatInfo.authInfo.refreshToken,
+        client_id: secret.api.clientId,
+        client_secret: secret.api.secret
+      })
+      .then(data => {
+        chatInfo.authInfo.password = 'oauth:' + data.data.access_token
+        chatInfo.authInfo.refreshToken = data.data.refresh_token
+        return
+      })
+    }, chatInfo.authInfo.expiresIn * 1000 - 100)
+    
   event.returnValue = 'Done'
 })
 
@@ -144,6 +160,18 @@ ipcMain.on('maximize', (event, arg) => {
   }
     
   win.focus()
+})
+
+ipcMain.on('change-title', (event, arg) => {
+  switch(arg.windowName) {
+    case 'win':
+      win.setTitle(arg.title)
+      break
+    case 'chatWin':
+      chatWin.setTitle(arg.title)
+      break
+  }
+  event.sender.send('title-changed', arg.title)
 })
 
 ipcMain.on('switch-chat-follow', (event, arg) => {

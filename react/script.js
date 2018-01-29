@@ -79,17 +79,13 @@ class App extends React.Component {
         authWindow.show();
 
         let handleCallback = async function (url) {
-            console.log(url)
-            console.log('Error:' + error)
             var raw_code = /code=([^&]*)/.exec(url) || null;
             var code = (raw_code && raw_code.length > 1) ? raw_code[1] : null;
             var error = /\?error=(.+)$/.exec(url);
 
             console.log('Code: ' + code)
             console.log('Raw Code: ' + raw_code)
-            
             console.log('URL: ' + url)
-            console.log('Error:' + error)
 
             if(url.indexOf('https://passport.twitch.tv/two_factor/') != -1) {
                 authWindow.loadURL(url);
@@ -103,16 +99,16 @@ class App extends React.Component {
 
             // If there is a code, proceed to get token from github
             if (code) {
-                console.log(code)
                 const params = `client_id=${secret.api.clientId}`
                 + `&client_secret=${secret.api.secret}`
                 + `&code=${code}`
                 + `&grant_type=authorization_code`
                 + `&redirect_uri=http://localhost`
                 const token = await axios.post('https://api.twitch.tv/kraken/oauth2/token?' + params, {})
+
                 localStorage.setItem('OAuth-Token', token.data.access_token)
                 localStorage.setItem('Refresh-Token', token.data.refresh_token)
-                localStorage.setItem('Expire-Date', token.data.expiresIn)
+                localStorage.setItem('Expire-Date', token.data.expires_in)
 
                 const userData = await axios.get('https://api.twitch.tv/kraken/user', {
                     headers: {
@@ -132,7 +128,6 @@ class App extends React.Component {
                         'Client-ID' : secret.api.clientId
                     }
                 })
-                console.log(follows)
                 
                 let games = JSON.parse(window.localStorage.getItem('Games-JSON'))
                 if(games === null)
@@ -151,7 +146,6 @@ class App extends React.Component {
                         gamesToRetrieve.push({id: item.user_id, game_id: item.game_id})
                     }
                 }))
-                console.log(follow_streams)
 
                 if(gamesToRetrieve.length > 0) {
                     const game = await axios.get('https://api.twitch.tv/helix/games?id=' + gamesToRetrieve.map(item => item.game_id).join('&id='), {
@@ -169,7 +163,6 @@ class App extends React.Component {
                         'Client-ID' : secret.api.clientId
                     }
                 })
-                console.log(users.data)
                 if(users.data.data) {
                     users.data.data.forEach(item => {
                         let i = 0
@@ -185,8 +178,6 @@ class App extends React.Component {
                 }
                 
                 window.localStorage.setItem('Games-JSON', JSON.stringify(games))
-                console.log(follow_streams)
-                console.log('====')
                 this.setState({
                     follow_streams: follow_streams
                 })
@@ -215,7 +206,9 @@ class App extends React.Component {
         const res = ipcRenderer.send('set-chat-info', {
             authInfo: ((localStorage.getItem('OAuth-Token') !== null) ? {
                 username: localStorage.getItem('Username'),
-                password: "oauth:" + localStorage.getItem('OAuth-Token')
+                password: "oauth:" + localStorage.getItem('OAuth-Token'),
+                refreshToken: localStorage.getItem('Refresh-Token'),
+                expiresIn: localStorage.getItem('Expire-Date')
             } : {
                 username: "justinfan" + Math.floor(Math.random() * 100000),
                 password: ""
@@ -296,7 +289,6 @@ class App extends React.Component {
             })
             return
         }
-        console.log(res.data)
         this.setState({
             sig: res.data.sig,
             accessToken: res.data.token
@@ -353,9 +345,7 @@ class App extends React.Component {
         document.getElementsByClassName('following-streams')[0].classList.add('hidden')
         
         await this.putChatInfo(userInfo)
-        
-        console.log(isStreaming)
-        
+                
     
         this.setState({
             isLoaded: false,
@@ -393,7 +383,6 @@ class App extends React.Component {
 
     followChatWindow(e) {
         const result = ipcRenderer.sendSync('switch-chat-follow')
-        console.log(result)
         this.setState({
             isChatFollowing: result == 'true'
         })
@@ -500,7 +489,6 @@ class HLSPlayer extends React.Component {
     }
     
     render() {
-        console.log('Reloading...')
         let body = <div className="hidden">Not Loaded!</div>
         if(this.props.isLoaded) {
             let url = 'http://localhost'
@@ -526,8 +514,7 @@ class HLSPlayer extends React.Component {
                         src={url}
                     />
                 </Player>)
-            } else
-                console.log(this.props.streamInfo)
+            } 
             body = (
                 <div id="player">
                     {playerArea}
@@ -571,7 +558,6 @@ class FollowStreams extends React.Component {
         const games = JSON.parse(window.localStorage.getItem('Games-JSON'))
         if(this.props.streams.length > 0) {
             div = this.props.streams.map((item, index) => {
-                console.log(item)
                 return (
                 <GridListTile key={item.img} onClick={() => this.props.openStream(item.user_id, false)}>
                     <img src={item.thumbnail_url.replace('{width}', '300').replace('{height}', '200')} alt={item.title} />
