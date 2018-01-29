@@ -171,9 +171,9 @@ class ChatApp extends React.Component {
         
         let nickname_box = document.createElement('div')
         nickname_box.classList.add('chat_nickname_box')
-        nickname_box.style.color = ((item.color) ? item.color : this.getColor(item.username))
-        nickname_box.innerText = ((item['display-name'] == item.username || !item['display-name']) ? item.username : item['display-name'] + '(' + item.username + ')')
-        
+        nickname_box.innerText = ((item['display-name']) ? item['display-name'] : item.username)
+        nickname_box.style.color = (item.color) ? item.color : '#FFFFFF'
+
         let badge_box = document.createElement('div')
         badge_box.classList.add('chat_badge_box')
 

@@ -8,6 +8,7 @@ const {BrowserWindow} = electron;
 const {ipcMain} = electron;
 const axios = require('axios')
 
+require('electron-debug')({});
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
@@ -79,11 +80,25 @@ function createWindow() {
 
   openChatWindow()
   var template = [{
-    label: "Application",
+    label: app.getName(),
+        submenu: [
+          {label: "About Application", role: 'about'},
+          {type: 'separator'},
+          {role: 'services', submenu: []},
+          {type: 'separator'},
+          {role: 'hide'},
+          {role: 'hideothers'},
+          {role: 'unhide'},
+          {type: 'separator'},
+          {label: 'Quit', accelerator: 'CmdOrCtrl+Q', role: 'quit'}
+    ]},{
+    label: 'Window', 
     submenu: [
-        { label: "About Application", selector: "orderFrontStandardAboutPanel:" },
-        { type: "separator" },
-        { label: "Quit", accelerator: "Command+Q", click: function() { app.quit(); }}
+      {accelerator: 'CmdOrCtrl+M', role: 'minimize'},
+      {accelerator: 'CmdOrCtrl+W', role: 'close'},
+      {role: 'zoom'},
+      {type: 'separator'},
+      {role: 'front'}
     ]}, {
     label: "Edit",
     submenu: [

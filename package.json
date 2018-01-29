@@ -1,6 +1,6 @@
 {
   "name": "electwitch",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "Simple Twitch Viewer built with Electron.",
   "main": "index.js",
   "scripts": {
@@ -21,6 +21,7 @@
     "babel-preset-react": "^6.24.1",
     "body-parser": "^1.18.2",
     "cookie-parser": "^1.4.3",
+    "electron-debug": "^1.5.0",
     "hls.js": "^0.8.9",
     "linkify-urls": "^1.4.0",
     "material-ui": "^1.0.0-beta.24",
