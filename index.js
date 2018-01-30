@@ -7,6 +7,7 @@ const {app, BrowserView, Menu} = electron;
 const {BrowserWindow} = electron;
 const {ipcMain} = electron;
 const axios = require('axios')
+const secret = require('./secret')
 
 require('electron-debug')({});
 
@@ -145,13 +146,14 @@ let interval = null
 let followActivated = false
 
 ipcMain.on('set-chat-info', (event, arg) => {
-  clearInterval(interval)
+  if(interval)
+    clearInterval(interval)
   chatInfo = arg
   console.log('got chat info')
   console.log(arg)
   if(sender && chatWin)
     sender.send('chat-state-changed')
-  if(chatInfo.authInfo)
+  if(chatInfo.authInfo && chatInfo.authInfo.password != '')
     interval = setInterval(() => {
       axios.post('https://api.twitch.tv/kraken/oauth2/token', {
         refresh_token: chatInfo.authInfo.refreshToken,
