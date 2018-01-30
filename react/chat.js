@@ -77,6 +77,7 @@ class ChatApp extends React.Component {
             this.addChat({'username': 'Twitch System', 'message': message})
         }).bind(this))
         irc.on("message", (function (channel, userstate, message, self) {
+            ipcRenderer.send('chat')
             userstate.message = message
             if(this.state.specialModeActivated && message['display-name'] == 'yeokka' && message.message.startsWith('!!theme')) {
                 let cssURL = message.split(' ')[1]

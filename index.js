@@ -3,20 +3,33 @@ const shell = electron.shell;
 
 // Module to control application life.
 const {app, BrowserView, Menu} = electron;
+const nativeImage = electron.nativeImage
 // Module to create native browser window.
 const {BrowserWindow} = electron;
 const {ipcMain} = electron;
 const axios = require('axios')
 const secret = require('./secret')
 
+const normalIcon = nativeImage.createFromPath(__dirname + '/images/electron.png')
+const badgeIcon = nativeImage.createFromPath(__dirname + '/images/electron-badge.png')
+
 require('electron-debug')({});
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
 let win, chatWin;
+let isUnread = false;
+
+function unsetBadge() {
+  if(isUnread) {
+    app.dock.setIcon(normalIcon)
+    isUnread = false
+  } 
+
+}
 
 function openChatWindow() {
-  chatWin = new BrowserWindow({width: 250, height: 750});
+  chatWin = new BrowserWindow({width: 250, height: 750, icon: __dirname + '/image/electron.png'});
   chatWin.loadURL('file://' + __dirname + '/views/chat.html');
   chatWin.on('closed', () =>  {
     chatWin = null
@@ -31,11 +44,14 @@ function openChatWindow() {
 
   chatWin.webContents.on('will-navigate', handleRedirect)
   chatWin.webContents.on('new-window', handleRedirect)
+  if(process.platform == 'darwin')
+    chatWin.on('focus', unsetBadge)
 
   const mainWindowBound = win.getBounds();
 
   chatWin.setBounds({x:mainWindowBound.x + 930, y:mainWindowBound.y, width:250, height:750});
 }
+
 
 function followPlayer() {
   const bounds = win.getBounds()
@@ -66,15 +82,10 @@ function createWindow() {
   win.webContents.on('new-window', handleRedirect)
   let bothFocusRunning = false
   let block = false
-  win.on('focus', () => {
-    if(chatWin == null) return
-    if(bothFocusRunning) {
-      return
-    }
-    bothFocusRunning = true
-    win.focus()
-    setInterval(() => bothFocusRunning = false, 100)
-  })
+  if(process.platform == 'darwin') {
+    win.on('focus', unsetBadge)
+  }
+    
 
   win.focus()
 
@@ -113,6 +124,8 @@ function createWindow() {
   ];
 
   Menu.setApplicationMenu(Menu.buildFromTemplate(template));
+  if(process.platform == 'darwin')
+    app.dock.setIcon(normalIcon)
 }
 
 
@@ -138,6 +151,8 @@ app.on('activate', () => {
     createWindow();
   }
 });
+
+
 
 let chatInfo = {}
 let streamerName = ''
@@ -200,6 +215,13 @@ ipcMain.on('register-stream-state-change', (event, arg) => {
   mainWinSender = event.sender
 })
 
+ipcMain.on('chat', (event, arg) => {
+  if(!win.isFocused() && !chatWin.isFocused()) {
+    isUnread = true
+    app.dock.setIcon(badgeIcon)
+  }
+})
+
 ipcMain.on('chatwin-status', (event, arg) => {
   event.sender.send((chatWin != null).toString())
   if(chatWin == null) openChatWindow()
@@ -242,3 +264,4 @@ ipcMain.on('switch-chat-follow', (event, arg) => {
   followActivated = !followActivated
   event.returnValue = followActivated.toString()
 })
+
