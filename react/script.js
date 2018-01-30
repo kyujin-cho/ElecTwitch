@@ -479,14 +479,15 @@ class App extends React.Component {
 class HLSPlayer extends React.Component {
     constructor(props) {
         super(props)
-        this.state = {client: null, viewers: 0}
+        this.state = {client: null}
     }
 
     getChatters() {
-        axios.get('http://tmi.twitch.tv/group/user/funzinnu/chatters').then((chatters) => {
-            this.setState({
-                viewers: chatters.data.chatter_count
-            })
+        if(!this.props.streamInfo.stream) return
+        console.log(this.props.streamInfo)
+        axios.get(`http://tmi.twitch.tv/group/user/${this.props.streamInfo.stream.channel.name.toLowerCase()}/chatters`).then((chatters) => {
+            console.log(chatters.data.chatter_count + ' Watching ')
+            document.getElementById('viewer_count').innerText = chatters.data.chatter_count + ' watching'
         })
     }
     async componentDidMount() {
@@ -552,7 +553,7 @@ class HLSPlayer extends React.Component {
                                 <Typography type="subheading" color="secondary">
                                 {this.props.streamInfo.stream.channel.display_name + ' playing ' + this.props.streamInfo.stream.channel.game}
                                 <div id="viewer_count">
-                                    {this.state.viewers} watching
+
                                 </div>
                                 </Typography>
                             </CardContent>
