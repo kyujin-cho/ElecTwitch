@@ -45,6 +45,8 @@ class ChatApp extends React.Component {
         const chatInfo = ipcRenderer.sendSync('get-chat-info')
         if(!chatInfo) return
 
+        if(!window.localStorage.getItem('Chat-Color'))
+            window.localStorage.setItem('Chat-Color', 'none')
         let cssURL = window.localStorage.getItem('cssURL')
         if(!cssURL) {
             cssURL = '../stylesheets/chat.css'
@@ -165,6 +167,7 @@ class ChatApp extends React.Component {
     }
 
     addChat(item) {
+        const colorOption = window.localStorage.getItem('Chat-Color')
         item.message = linkifyUrls(item.message)
         // console.log('addChat Fired')
         let body = document.createElement('div')
@@ -177,7 +180,7 @@ class ChatApp extends React.Component {
         let nickname_box = document.createElement('div')
         nickname_box.classList.add('chat_nickname_box')
         nickname_box.innerText = ((item['display-name']) ? item['display-name'] : item.username)
-        nickname_box.style.color = (item.color) ? item.color : '#FFFFFF'
+        if(colorOption == 'username' || colorOption == 'both') nickname_box.style.color = (item.color) ? item.color : '#FFFFFF'
 
         let badge_box = document.createElement('div')
         badge_box.classList.add('chat_badge_box')
@@ -190,6 +193,7 @@ class ChatApp extends React.Component {
 
         let chat_msg_box = document.createElement('div')
         chat_msg_box.classList.add('chat_msg_box')
+        if(colorOption == 'chat' || colorOption == 'both') chat_msg_box.style.color = (item.color) ? item.color : '#FFFFFF'
 
         if(item['emotes-raw']) {
             item['emotes-raw'] = item['emotes-raw'].split('/')
@@ -335,6 +339,18 @@ class ChatApp extends React.Component {
                         window.localStorage.setItem('theme', JSON.stringify(themes))
                         this.addChat({'username': 'Internal Service', 'message': `Updated theme ${keyword}.`})        
                     }                    
+                }
+            } else if (this.state.chat.startsWith('!!setOption')) {
+                switch(this.state.chat.split(' ')[1]) {
+                    case 'chatColor':
+                        const option = this.state.chat.split(' ')[2]
+                        if(!(option == 'username' || option == 'chat' || option == 'none' || option == 'both')) {
+                            this.addChat({'username': 'Internal Service', 'message': 'Invalid argument supplied.'})
+                        } else {
+                            window.localStorage.setItem('Chat-Color', option)
+                            this.addChat({'username': 'Internal Service', 'message': 'Updated Chat Color option.'})
+                        }
+                        break;
                 }
             } else if (this.state.chat.startsWith('!!setMode SpecialMode_' + window.require('electron').remote.app.getVersion())) {
                 this.setState({
