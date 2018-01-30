@@ -55,8 +55,7 @@ function createWindow() {
     // in an array if your app supports multi windows, this is the time
     // when you should delete the corresponding element.
     win = null;
-    if(chatWin)
-    chatWin.close()
+    // if(chatWin) chatWin.close()
   });
   const handleRedirect = (e, url) => {
     e.preventDefault()
@@ -141,7 +140,9 @@ app.on('activate', () => {
 });
 
 let chatInfo = {}
-let sender = null
+let streamerName = ''
+let mainWinSender = null
+let chatWinSender = null
 let interval = null
 let followActivated = false
 
@@ -151,8 +152,8 @@ ipcMain.on('set-chat-info', (event, arg) => {
   chatInfo = arg
   console.log('got chat info')
   console.log(arg)
-  if(sender && chatWin)
-    sender.send('chat-state-changed')
+  if(chatWinSender && chatWin)
+    chatWinSender.send('chat-state-changed')
   if(chatInfo.authInfo && chatInfo.authInfo.password != '')
     interval = setInterval(() => {
       axios.post('https://api.twitch.tv/kraken/oauth2/token', {
@@ -170,6 +171,20 @@ ipcMain.on('set-chat-info', (event, arg) => {
   event.returnValue = 'Done'
 })
 
+ipcMain.on('set-stream-info', (event, arg) => {
+  streamerName = arg.streamerName
+  if(mainWinSender && win)
+    mainWinSender.send('stream-state-changed')
+  event.returnValue = 'Done'
+})
+
+ipcMain.on('set-streamer', (event, arg) => {
+  chatInfo.streamer = arg.streamer
+  if(chatWinSender && chatWin)
+    chatWinSender.send('chat-state-changed')
+  event.returnValue = 'Done'
+})
+
 ipcMain.on('get-chat-info', (event, arg) => {
   console.log('chat info get')
   event.returnValue = chatInfo
@@ -177,7 +192,12 @@ ipcMain.on('get-chat-info', (event, arg) => {
 
 ipcMain.on('register-chat-state-change', (event, arg) => {
   console.log('chat window sender opened')
-  sender = event.sender
+  chatWinSender = event.sender
+})
+
+ipcMain.on('register-stream-state-change', (event, arg) => {
+  console.log('main window sender opened')
+  mainWinSender = event.sender
 })
 
 ipcMain.on('chatwin-status', (event, arg) => {

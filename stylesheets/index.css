@@ -57,6 +57,10 @@ div#player button {
     color: #F44336;
 }
 
+#viewer_count {
+    float: right;
+}
+
 
 .notice {
     font-size: 11px;

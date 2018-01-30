@@ -23,6 +23,7 @@ import AddIcon from '../node_modules/material-ui-icons/Add'
 import ModeEditIcon from '../node_modules/material-ui-icons/ModeEdit'
 import GridList, { GridListTile, GridListTileBar } from 'material-ui/GridList';
 import IconButton from 'material-ui/IconButton';
+import Icon from '../node_modules/material-ui/Icon'
 import StarBorderIcon from 'material-ui-icons/StarBorder';
 import Paper from 'material-ui/Paper';
 import { win32 } from 'path';
@@ -68,6 +69,13 @@ class App extends React.Component {
         }
         if(localStorage.getItem('Username') != null)
             await this.tryLogin()
+        ipcRenderer.send('register-stream-state-change')
+        ipcRenderer.on('stream-state-changed', (event, arg) => {
+            const chatInfo = ipcRenderer.sendSync('get-chat-info')
+            if(this.state.streamInfo.stream.channel.name != chatInfo.streamer) {
+                this.openStream(chatInfo.streamer, false)
+            }
+        })
     }
 
     async tryLogin() {
@@ -471,7 +479,19 @@ class App extends React.Component {
 class HLSPlayer extends React.Component {
     constructor(props) {
         super(props)
-        this.state = {client: null}
+        this.state = {client: null, viewers: 0}
+    }
+
+    getChatters() {
+        axios.get('http://tmi.twitch.tv/group/user/funzinnu/chatters').then((chatters) => {
+            this.setState({
+                viewers: chatters.data.chatter_count
+            })
+        })
+    }
+    async componentDidMount() {
+        this.getChatters.bind(this)()
+        setInterval(this.getChatters.bind(this), 5 * 1000)
     }
     
     shouldComponentUpdate(nextProps, nextState) {
@@ -531,6 +551,9 @@ class HLSPlayer extends React.Component {
                                 <Typography type="headline">{this.props.streamInfo.stream.channel.status}</Typography>
                                 <Typography type="subheading" color="secondary">
                                 {this.props.streamInfo.stream.channel.display_name + ' playing ' + this.props.streamInfo.stream.channel.game}
+                                <div id="viewer_count">
+                                    {this.state.viewers} watching
+                                </div>
                                 </Typography>
                             </CardContent>
                             </div>

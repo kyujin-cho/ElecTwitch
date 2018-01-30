@@ -6,6 +6,7 @@ import secret from '../secret'
 import linkifyUrls from 'linkify-urls'
 
 import Button from '../node_modules/material-ui/Button'
+import Icon from '../node_modules/material-ui/Icon'
 import TextField from '../node_modules/material-ui/TextField'
 import Card, { CardContent, CardMedia } from 'material-ui/Card';
 import ModeEditIcon from '../node_modules/material-ui-icons/ModeEdit'
@@ -97,6 +98,9 @@ class ChatApp extends React.Component {
                 stylesheet.setAttribute('href', cssURL)
             }
             this.addChat(userstate)
+        }).bind(this))
+        irc.on('host', (function (channel, target, viewers) {
+            ipcRenderer.send('set-streamer', {streamer: target})
         }).bind(this))
     
 
