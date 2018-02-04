@@ -216,7 +216,7 @@ ipcMain.on('register-stream-state-change', (event, arg) => {
 })
 
 ipcMain.on('chat', (event, arg) => {
-  if(!win.isFocused() && !chatWin.isFocused()) {
+  if(!isUnread && (win != null && !win.isFocused()) && (chatWin != null && !chatWin.isFocused())) {
     isUnread = true
     app.dock.setIcon(badgeIcon)
   }

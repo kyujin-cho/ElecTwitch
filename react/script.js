@@ -54,7 +54,7 @@ const clone = function(obj) {
 class App extends React.Component {
     constructor(props) {
         super(props)
-        this.state = {streamerName: '', isChatFollowing: false, follow_streams: [], dcCon: {}, updateOpen: false, users: {}, client: null, chats: [], title: 'ElecTwitch', error: '', isLoaded: false, streamOn: false, accessToken: {}, streamInfo: {}, sig: '', dialogOpen: false}
+        this.state = {streamerName: '', isStreamOpening: false, isChatFollowing: false, follow_streams: [], dcCon: {}, updateOpen: false, users: {}, client: null, chats: [], title: 'ElecTwitch', error: '', isLoaded: false, streamOn: false, accessToken: {}, streamInfo: {}, sig: '', dialogOpen: false}
     }
 
     async componentDidMount() {
@@ -254,6 +254,10 @@ class App extends React.Component {
     }
 
     async openStream(userInfo, isClicked) {
+        if(this.state.isStreamOpening) return
+        this.setState({
+            isStreamOpening: true
+        })
         this.setState({
             error: ''
         })
@@ -293,7 +297,8 @@ class App extends React.Component {
         } catch(e) {
             this.setState({
                 error: '그런 스트리머가 존재하지 않습니다.',
-                streamOn: false
+                streamOn: false,
+                isStreamOpening: false
             })
             return
         }
@@ -302,6 +307,9 @@ class App extends React.Component {
             accessToken: res.data.token
         })
         const streamInfo = JSON.parse(res.data.token)
+        
+        if(document.getElementsByClassName('video-react-video')[0])
+            document.getElementsByClassName('video-react-video')[0].pause()
         
         url = `https://usher.ttvnw.net/api/channel/hls/${userInfo}.m3u8?`
         url += serialize({
@@ -365,6 +373,9 @@ class App extends React.Component {
         })
         document.getElementById('show-input').classList.remove('hidden')
         this.handleClose()
+        this.setState({
+            isStreamOpening: false
+        })
     }
 
 
@@ -485,14 +496,28 @@ class HLSPlayer extends React.Component {
     getChatters() {
         if(!this.props.streamInfo.stream) return
         console.log(this.props.streamInfo)
-        axios.get(`http://tmi.twitch.tv/group/user/${this.props.streamInfo.stream.channel.name.toLowerCase()}/chatters`).then((chatters) => {
-            console.log(chatters.data.chatter_count + ' Watching ')
-            document.getElementById('viewer_count').innerText = chatters.data.chatter_count + ' watching'
-        })
+        if(this.props.streamOn) {
+            axios.get(`https://api.twitch.tv/kraken/streams/${this.props.streamInfo.stream.channel.name.toLowerCase()}`, {
+                headers: {
+                    'Client-ID': secret.api.clientId
+                }
+            })
+            .then((chatters) => {
+                if(chatters.data.stream) {
+                    console.log(chatters.data.stream.viewers + ' watching...')
+                    document.getElementById('viewer_count').innerText = chatters.data.stream.viewers + ' watching'
+                }
+            })
+        } else {
+            axios.get(`http://tmi.twitch.tv/group/user/${this.props.streamInfo.stream.channel.name.toLowerCase()}/chatters`).then((chatters) => {
+                console.log(chatters.data.chatter_count + ' Watching ')
+                document.getElementById('viewer_count').innerText = chatters.data.chatter_count + ' in chatroom'
+            })
+        }
     }
     async componentDidMount() {
         this.getChatters.bind(this)()
-        setInterval(this.getChatters.bind(this), 5 * 1000)
+        setInterval(this.getChatters.bind(this), 15 * 1000)
     }
     
     shouldComponentUpdate(nextProps, nextState) {
