@@ -68,7 +68,7 @@ class App extends React.Component {
             })
         }
         if(localStorage.getItem('Username') != null)
-            await this.tryLogin()
+            await this.refreshToken()
         ipcRenderer.send('register-stream-state-change')
         ipcRenderer.on('stream-state-changed', (event, arg) => {
             const chatInfo = ipcRenderer.sendSync('get-chat-info')
@@ -76,6 +76,30 @@ class App extends React.Component {
                 this.openStream(chatInfo.streamer, false)
             }
         })
+    }
+
+    async refreshToken() {
+        console.log({
+            refresh_token: window.localStorage.getItem('Refresh-Token'),
+            client_id: secret.api.clientId,
+            client_secret: secret.api.secret
+        })
+
+        
+        const token = await axios.post('https://api.twitch.tv/kraken/oauth2/token', {
+            refresh_token: window.localStorage.getItem('Refresh-Token'),
+            client_id: secret.api.clientId,
+            client_secret: secret.api.secret,
+            grant_type: 'refresh_token'
+        })
+
+        
+        window.localStorage.setItem('OAuth-Token', token.data.access_token)
+        window.localStorage.setItem('Refresh-Token', token.data.refresh_token)
+        window.localStorage.setItem('Expire-Date', token.data.expires_in)
+
+        await this.setUserData(token.data.access_token, token.data.refresh_token, token.data.expires_in)
+
     }
 
     async tryLogin() {
@@ -118,79 +142,7 @@ class App extends React.Component {
                 localStorage.setItem('Refresh-Token', token.data.refresh_token)
                 localStorage.setItem('Expire-Date', token.data.expires_in)
 
-                const userData = await axios.get('https://api.twitch.tv/kraken/user', {
-                    headers: {
-                        Accept: 'application/vnd.twitchtv.v5+json', 
-                        'Client-ID': secret.api.clientId, 
-                        Authorization: 'OAuth ' + token.data.access_token, 
-                    }
-                })
-
-                localStorage.setItem('Username', userData.data.name)
-                document.getElementById('login-button').disabled = true
-                document.getElementById('login-button').innerText = 'Logged In'
-
-                
-                const follows = await axios.get('https://api.twitch.tv/helix/users/follows?from_id=' + userData.data._id, {
-                    headers: {
-                        'Client-ID' : secret.api.clientId
-                    }
-                })
-                
-                let games = JSON.parse(window.localStorage.getItem('Games-JSON'))
-                if(games === null)
-                    games = {}
-                let gamesToRetrieve = []
-                let follow_streams = []
-                const streams = await axios.get('https://api.twitch.tv/helix/streams?user_id=' + follows.data.data.map(item => item.to_id).join('&user_id='), {
-                    headers: {
-                        'Client-ID' : 'jzkbprff40iqj646a697cyrvl0zt2m6'                           
-                    }
-                })
-                
-                follow_streams = streams.data.data
-                follow_streams.map(((item, index) => {
-                    if(!games[item.game_id]) {
-                        gamesToRetrieve.push({id: item.user_id, game_id: item.game_id})
-                    }
-                }))
-
-                if(gamesToRetrieve.length > 0) {
-                    const game = await axios.get('https://api.twitch.tv/helix/games?id=' + gamesToRetrieve.map(item => item.game_id).join('&id='), {
-                        headers: {
-                            'Client-ID': secret.api.clientId
-                        }
-                    })
-                    game.data.data.forEach((item, index) => {
-                        games[item.id] = item
-                    })
-                }
-
-                const users = await axios.get('https://api.twitch.tv/helix/users?id=' + follow_streams.map(item => item.user_id).join('&id='), {
-                    headers: {
-                        'Client-ID' : secret.api.clientId
-                    }
-                })
-                if(users.data.data) {
-                    users.data.data.forEach(item => {
-                        let i = 0
-                        while(i < follow_streams.length && follow_streams[i].user_id != item.id) {
-                            i++;
-                        }
-                        if(i == follow_streams.length)
-                            return true;
-                        else
-                            follow_streams[i].game = item.name
-                        follow_streams[i].display_name = item.display_name
-                    })
-                }
-                
-                window.localStorage.setItem('Games-JSON', JSON.stringify(games))
-                this.setState({
-                    follow_streams: follow_streams
-                })
-
-                await this.putChatInfo('#')
+                await this.setUserData(token.data.access_token, token.data.refresh_token, token.data.expires_in)
                 
             } else if (error) {
                 alert('Oops! Something went wrong and we couldn\'t' +
@@ -208,6 +160,82 @@ class App extends React.Component {
         authWindow.webContents.on('did-get-redirect-request', function (event, oldUrl, newUrl) {
             handleCallback(newUrl);
         });
+    }
+
+    async setUserData(accessToken, refreshToken, expiresIn) {
+        const userData = await axios.get('https://api.twitch.tv/kraken/user', {
+            headers: {
+                Accept: 'application/vnd.twitchtv.v5+json', 
+                'Client-ID': secret.api.clientId, 
+                Authorization: 'OAuth ' + accessToken, 
+            }
+        })
+
+        localStorage.setItem('Username', userData.data.name)
+        document.getElementById('login-button').disabled = true
+        document.getElementById('login-button').innerText = 'Logged In'
+
+        
+        const follows = await axios.get('https://api.twitch.tv/helix/users/follows?from_id=' + userData.data._id, {
+            headers: {
+                'Client-ID' : secret.api.clientId
+            }
+        })
+        
+        let games = JSON.parse(window.localStorage.getItem('Games-JSON'))
+        if(games === null)
+            games = {}
+        let gamesToRetrieve = []
+        let follow_streams = []
+        const streams = await axios.get('https://api.twitch.tv/helix/streams?user_id=' + follows.data.data.map(item => item.to_id).join('&user_id='), {
+            headers: {
+                'Client-ID' : 'jzkbprff40iqj646a697cyrvl0zt2m6'                           
+            }
+        })
+        
+        follow_streams = streams.data.data
+        follow_streams.map(((item, index) => {
+            if(!games[item.game_id]) {
+                gamesToRetrieve.push({id: item.user_id, game_id: item.game_id})
+            }
+        }))
+
+        if(gamesToRetrieve.length > 0) {
+            const game = await axios.get('https://api.twitch.tv/helix/games?id=' + gamesToRetrieve.map(item => item.game_id).join('&id='), {
+                headers: {
+                    'Client-ID': secret.api.clientId
+                }
+            })
+            game.data.data.forEach((item, index) => {
+                games[item.id] = item
+            })
+        }
+
+        const users = await axios.get('https://api.twitch.tv/helix/users?id=' + follow_streams.map(item => item.user_id).join('&id='), {
+            headers: {
+                'Client-ID' : secret.api.clientId
+            }
+        })
+        if(users.data.data) {
+            users.data.data.forEach(item => {
+                let i = 0
+                while(i < follow_streams.length && follow_streams[i].user_id != item.id) {
+                    i++;
+                }
+                if(i == follow_streams.length)
+                    return true;
+                else
+                    follow_streams[i].game = item.name
+                follow_streams[i].display_name = item.display_name
+            })
+        }
+        
+        window.localStorage.setItem('Games-JSON', JSON.stringify(games))
+        this.setState({
+            follow_streams: follow_streams
+        })
+
+        await this.putChatInfo('#')
     }
 
     async putChatInfo(channel) {

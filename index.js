@@ -174,7 +174,8 @@ ipcMain.on('set-chat-info', (event, arg) => {
       axios.post('https://api.twitch.tv/kraken/oauth2/token', {
         refresh_token: chatInfo.authInfo.refreshToken,
         client_id: secret.api.clientId,
-        client_secret: secret.api.secret
+        client_secret: secret.api.secret,
+        grant_type: 'refresh_token'
       })
       .then(data => {
         chatInfo.authInfo.password = 'oauth:' + data.data.access_token
@@ -216,8 +217,9 @@ ipcMain.on('register-stream-state-change', (event, arg) => {
 })
 
 ipcMain.on('chat', (event, arg) => {
-  if(!isUnread && (win != null && !win.isFocused()) && (chatWin != null && !chatWin.isFocused())) {
+  if( !isUnread && (win != null && !win.isFocused()) && (chatWin != null && !chatWin.isFocused())) {
     isUnread = true
+    if(process.platform == 'darwin')
     app.dock.setIcon(badgeIcon)
   }
 })
