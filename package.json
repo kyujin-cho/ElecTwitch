@@ -1,6 +1,6 @@
 {
   "name": "electwitch",
-  "version": "0.1.6",
+  "version": "0.9.1",
   "description": "Simple Twitch Viewer built with Electron.",
   "main": "index.js",
   "scripts": {
@@ -10,17 +10,9 @@
   "license": "GPL-2.0",
   "dependencies": {
     "axios": "^0.17.1",
-    "babel": "^6.23.0",
-    "babel-core": "^6.26.0",
-    "babel-eslint": "^8.0.2",
-    "babel-loader": "^7.1.2",
-    "babel-plugin-transform-async-to-generator": "^6.24.1",
-    "babel-polyfill": "^6.26.0",
-    "babel-preset-env": "^1.6.1",
-    "babel-preset-es2017": "^6.24.1",
-    "babel-preset-react": "^6.24.1",
     "body-parser": "^1.18.2",
     "cookie-parser": "^1.4.3",
+    "electron": "^4.0.1",
     "electron-debug": "^1.5.0",
     "hls.js": "^0.8.9",
     "linkify-urls": "^1.5.0",
@@ -33,15 +25,10 @@
     "react-dom": "^16.2.0",
     "redux": "^3.7.2",
     "serve-favicon": "^2.4.5",
-    "sqlite3": "^3.1.13",
+    "sqlite3": "^4.0.6",
     "tmi.js": "^1.2.1",
+    "tslint": "^5.12.1",
+    "typescript": "^3.2.4",
     "video-react": "^0.9.3"
-  },
-  "devDependencies": {
-    "electron": "^1.8.1",
-    "electron-installer-dmg": "^0.2.1",
-    "electron-prebuilt": "^1.4.13",
-    "electron-winstaller": "^2.6.3",
-    "webpack": "^3.10.0"
   }
 }
