@@ -21,8 +21,9 @@ export const chatReducer: Reducer<ChatState> = (
 export const authReducer: Reducer<AuthState> = (
   state: AuthState = {
     username: '',
-    password: '',
+    accessToken: '',
     refreshToken: '',
+    expiresIn: 0,
   },
   action
 ): AuthState => {

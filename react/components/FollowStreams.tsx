@@ -6,23 +6,30 @@ import {
   Typography,
   GridList,
 } from '@material-ui/core'
+import { withRouter, RouteComponentProps } from 'react-router-dom'
+import { MyStreamsType } from '../constants'
 
-interface IProps {
-  streams: any[]
-  openStream: (userInfo: any, isClicked: boolean) => Promise<void>
+interface IProps extends RouteComponentProps {
+  streams: MyStreamsType[]
 }
 
 class FollowStreams extends Component<IProps, any> {
+  constructor(props: IProps) {
+    super(props)
+    this.openStream = this.openStream.bind(this)
+  }
+
+  private openStream(stream: string) {
+    this.props.history.push('/' + stream)
+  }
   public render() {
     let div
     const games = JSON.parse(window.localStorage.getItem('Games-JSON')!)
     if (this.props.streams.length > 0) {
       div = this.props.streams.map((item, index) => {
+        console.log(item)
         return (
-          <GridListTile
-            key={item.img}
-            onClick={() => this.props.openStream(item.user_id, false)}
-          >
+          <GridListTile key={index} onClick={() => this.openStream(item.login)}>
             <img
               src={item.thumbnail_url
                 .replace('{width}', '300')
@@ -42,9 +49,13 @@ class FollowStreams extends Component<IProps, any> {
         <Paper className={'paper'} elevation={4}>
           <div className="inside">
             <Typography component="h2">Follows</Typography>
-            <GridList className={'gridList'} cols={2.5}>
-              {div}
-            </GridList>
+            {div ? (
+              <GridList className={'gridList'} cols={2.5}>
+                {div}
+              </GridList>
+            ) : (
+              <div> No Stream Yet! </div>
+            )}
           </div>
         </Paper>
       </div>
@@ -52,4 +63,4 @@ class FollowStreams extends Component<IProps, any> {
   }
 }
 
-export default FollowStreams
+export default withRouter(FollowStreams)

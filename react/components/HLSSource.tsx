@@ -8,19 +8,19 @@ const propTypes = {
   video: PropTypes.object,
 }
 
-type PropType = {
+interface IProps {
   src: string
   type?: string
   video?: any
 }
 
-type StateType = {
+interface IState {
   hls: Hls
 }
 
-export default class HLSSource extends Component<PropType, StateType> {
+export default class HLSSource extends Component<IProps, IState> {
   public static propTypes: any
-  constructor(props: PropType, context: any) {
+  constructor(props: IProps, context: any) {
     super(props, context)
     this.state = {
       hls: new Hls(),

@@ -5,8 +5,9 @@ export type ChatState = {
 
 export type AuthState = {
   readonly username: string
-  readonly password: string
+  readonly accessToken: string
   readonly refreshToken: string
+  readonly expiresIn: number
 }
 
 export type YDCConResponse = {
@@ -21,4 +22,13 @@ export enum ActionTypes {
   SET_STREAMER = 'SET_CHAT_INFO',
   SET_AUTH_INFO = 'SET_AUTH_INFO',
   SET_STREAMER_NAME = 'SET_STREAMER',
+}
+
+export type MyStreamsType = {
+  login: string
+  game: string
+  game_id: string
+  display_name: string
+  thumbnail_url: string
+  title: string
 }

@@ -1,8 +1,8 @@
-import React from 'react'
+import * as React from 'react'
 import ReactDOM from 'react-dom'
 import { createStore } from 'redux'
 import { Provider } from 'react-redux'
-import { Reducers } from '../redux/reducers'
+import { Reducers } from './redux/reducers'
 import Main from './Main'
 
 const store = createStore(Reducers)

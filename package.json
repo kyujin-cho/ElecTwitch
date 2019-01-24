@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "postinstall": "cp -r types/* node_modules/@types"
+    "postinstall": "cp -r ../TypeD/* node_modules/@types"
   },
   "author": "Kyujin Cho",
   "license": "GPL-2.0",
@@ -20,6 +20,7 @@
     "@types/react-redux": "^7.0.0",
     "@types/react-router": "^4.4.3",
     "@types/react-router-dom": "^4.3.1",
+    "awesome-typescript-loader": "^5.2.1",
     "axios": "^0.18.0",
     "body-parser": "^1.18.2",
     "cookie-parser": "^1.4.3",
@@ -39,6 +40,7 @@
     "react-router-dom": "^4.3.1",
     "redux": "^3.7.2",
     "serve-favicon": "^2.4.5",
+    "source-map-loader": "^0.2.4",
     "sqlite3": "^4.0.6",
     "tmi.js": "^1.2.1",
     "ts-loader": "^5.3.3",
@@ -49,7 +51,10 @@
     "twitch-js": "^1.2.17",
     "typesafe-actions": "^3.0.0",
     "typescript": "^3.2.4",
-    "video-react": "^0.9.3",
+    "video-react": "^0.13.2",
     "webpack": "^4.29.0"
+  },
+  "devDependencies": {
+    "webpack-cli": "^3.2.1"
   }
 }

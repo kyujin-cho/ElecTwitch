@@ -5,9 +5,9 @@ import linkifyUrls from 'linkify-urls'
 import React, { ChangeEvent, Component, KeyboardEvent } from 'react'
 import { connect } from 'react-redux'
 import tmi from 'twitch-js'
-import { AuthState, ChatState, YDCConResponse } from '../../constants'
-import { setStreamerName } from '../../redux/actions'
-import secret from '../../secret'
+import { AuthState, ChatState, YDCConResponse } from '../constants'
+import { setStreamerName } from '../redux/actions'
+import secret from '../secret'
 import { Dispatch } from 'redux'
 
 declare global {
@@ -50,10 +50,11 @@ interface IChatDispatchProps {
 }
 
 // tslint:disable-next-line:no-empty-interface
-interface IChatBaseProps {}
+interface IChatBaseProps {
+  streamer: string
+}
 
 interface IState {
-  chatInfo: any
   dcCon: any
   badges: any
   specialModeActivated: boolean
@@ -80,14 +81,23 @@ class ChatPage extends Component<
 > {
   constructor(props: IChatStateProps & IChatDispatchProps & IChatBaseProps) {
     super(props)
+    this.state = {
+      dcCon: {},
+      badges: {},
+      specialModeActivated: false,
+      irc: {},
+      chat: '',
+      sendingChat: false,
+      keymap: {},
+      users: {},
+      index: -1,
+    }
     this.handleChange = this.handleChange.bind(this)
     this.handleKey = this.handleKey.bind(this)
     this.sendChat = this.sendChat.bind(this)
   }
   public async componentDidMount() {
-    const chatInfo: ChatState = this.props.chatInfo
     const authInfo: AuthState = this.props.authInfo
-    if (!chatInfo) return
 
     if (!window.localStorage.getItem('Chat-Color')) {
       window.localStorage.setItem('Chat-Color', 'none')
@@ -118,7 +128,7 @@ class ChatPage extends Component<
     irc
       .connect()
       .then(() => {
-        if (chatInfo.streamer !== '#') irc.join(chatInfo.streamer)
+        if (this.props.streamer !== '#') irc.join(this.props.streamer)
       })
       .catch(err => console.error(err))
     irc.on(
@@ -176,7 +186,7 @@ class ChatPage extends Component<
     })
 
     let jsons: AxiosResponse<YDCConResponse>
-    switch (chatInfo.streamer) {
+    switch (this.props.streamer) {
       case 'yeokka':
         console.log('Loading yeokka DCCon...')
         jsons = await Axios.get(
@@ -203,10 +213,10 @@ class ChatPage extends Component<
         })
         break
     }
-    if (chatInfo.streamer !== '#') {
-      console.log('Loading badge for ' + chatInfo.streamer + '...')
+    if (this.props.streamer !== '#') {
+      console.log('Loading badge for ' + this.props.streamer + '...')
       let userId = await Axios.get(
-        'https://api.twitch.tv/helix/users?login=' + chatInfo.streamer,
+        'https://api.twitch.tv/helix/users?login=' + this.props.streamer,
         { headers: { 'Client-ID': 'azoulwf5023j77d8qbuhidthgw9pg9' } }
       )
       userId = userId.data.data[0].id
@@ -224,7 +234,6 @@ class ChatPage extends Component<
     }
 
     this.setState({
-      chatInfo,
       irc,
     })
   }
@@ -345,8 +354,8 @@ class ChatPage extends Component<
     const scrollDiff = chatElement.scrollHeight - chatElement.scrollTop
 
     chatMsgBox.innerHTML +=
-      (this.state.chatInfo.streamer === 'yeokka' ||
-        this.state.chatInfo.streamer === 'funzinnu') &&
+      (this.props.streamer === 'yeokka' ||
+        this.props.streamer === 'funzinnu') &&
       item.message.indexOf('~') !== -1
         ? this.getCons(item.message)
         : item.message
@@ -606,8 +615,9 @@ const mapStateToProps = (
   return {
     authInfo: {
       username: state.username,
-      password: state.password,
+      accessToken: state.accessToken,
       refreshToken: state.refreshToken,
+      expiresIn: state.expiresIn,
     },
     chatInfo: {
       streamer: state.streamer,

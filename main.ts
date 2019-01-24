@@ -1,3 +1,5 @@
+import * as Electron from 'electron'
+// tslint:disable-next-line:no-duplicate-imports
 import {
   BrowserWindow,
   nativeImage,
@@ -32,13 +34,13 @@ export default class Main {
   }
 
   private static onReady() {
-    this.createWindow()
+    Main.createWindow()
   }
 
   private static unsetBadge() {
-    if (this.isUnread) {
+    if (Main.isUnread) {
       Main.application.dock.setIcon(normalIcon)
-      this.isUnread = false
+      Main.isUnread = false
     }
   }
 
@@ -50,16 +52,21 @@ export default class Main {
     // and load the index.html of the app.
 
     // Emitted when the window is closed.
-    Main.mainWindow.on('closed', this.onClose)
+    Main.mainWindow.on('closed', Main.onClose)
     const handleRedirect = (e: Event, url: string) => {
       e.preventDefault()
-      require('electron').shell.openExternal(url)
+      console.log('Here, URL: ' + url)
+      if (url.indexOf('file:') === 0) {
+        if (Main.mainWindow != null) Main.mainWindow.loadURL(url)
+      } else {
+        require('electron').shell.openExternal(url)
+      }
     }
 
     Main.mainWindow.webContents.on('will-navigate', handleRedirect)
     Main.mainWindow.webContents.on('new-window', handleRedirect)
     if (process.platform === 'darwin') {
-      Main.mainWindow.on('focus', this.unsetBadge)
+      Main.mainWindow.on('focus', Main.unsetBadge)
     }
 
     Main.mainWindow.focus()
@@ -84,6 +91,7 @@ export default class Main {
         submenu: [
           { accelerator: 'CmdOrCtrl+M', role: 'minimize' },
           { accelerator: 'CmdOrCtrl+W', role: 'close' },
+          { accelerator: 'CmdOrCtrl+R', role: 'reload' },
           { role: 'zoom' },
           { type: 'separator' },
           { role: 'front' },
@@ -92,15 +100,16 @@ export default class Main {
       {
         label: 'Edit',
         submenu: [
-          { label: 'Undo', accelerator: 'CmdOrCtrl+Z' },
+          { label: 'Undo', accelerator: 'CmdOrCtrl+Z', role: 'undo' },
           {
             label: 'Redo',
             accelerator: 'Shift+CmdOrCtrl+Z',
+            role: 'redo',
           },
           { type: 'separator' },
-          { label: 'Cut', accelerator: 'CmdOrCtrl+X' },
-          { label: 'Copy', accelerator: 'CmdOrCtrl+C' },
-          { label: 'Paste', accelerator: 'CmdOrCtrl+V' },
+          { label: 'Cut', accelerator: 'CmdOrCtrl+X', role: 'cut' },
+          { label: 'Copy', accelerator: 'CmdOrCtrl+C', role: 'copy' },
+          { label: 'Paste', accelerator: 'CmdOrCtrl+V', role: 'paste' },
           {
             label: 'Select All',
             accelerator: 'CmdOrCtrl+A',
@@ -111,6 +120,7 @@ export default class Main {
 
     Menu.setApplicationMenu(Menu.buildFromTemplate(template))
     if (process.platform === 'darwin') Main.application.dock.setIcon(normalIcon)
+    Main.mainWindow.webContents.openDevTools()
   }
 
   public static main(app: Electron.App, browserWindow: typeof BrowserWindow) {
@@ -133,17 +143,17 @@ export default class Main {
     app.on('activate', () => {
       // On OS X it's common to re-create a window in the app when the
       // dock icon is clicked and there are no other windows open.
-      if (this.mainWindow === null) {
-        this.createWindow()
+      if (Main.mainWindow === null) {
+        Main.createWindow()
       }
     })
 
     ipcMain.on('chat', (event: IpcMessageEvent, arg: any) => {
       if (
-        !this.isUnread &&
-        (this.mainWindow != null && !this.mainWindow.isFocused())
+        !Main.isUnread &&
+        (Main.mainWindow != null && !Main.mainWindow.isFocused())
       ) {
-        this.isUnread = true
+        Main.isUnread = true
         if (process.platform === 'darwin') app.dock.setIcon(badgeIcon)
       }
     })
@@ -151,7 +161,7 @@ export default class Main {
     ipcMain.on('change-title', (event: IpcMessageEvent, arg: any) => {
       switch (arg.windowName) {
         case 'win':
-          if (this.mainWindow != null) this.mainWindow.setTitle(arg.title)
+          if (Main.mainWindow != null) Main.mainWindow.setTitle(arg.title)
           break
       }
       event.sender.send('title-changed', arg.title)
