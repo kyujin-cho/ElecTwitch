@@ -248,3 +248,5 @@ secret.js
 package-lock.json
 javascripts/*
 
+App.js
+main.js
