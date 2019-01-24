@@ -113,6 +113,7 @@ export default class Main {
           {
             label: 'Select All',
             accelerator: 'CmdOrCtrl+A',
+            role: 'selectAll',
           },
         ],
       },

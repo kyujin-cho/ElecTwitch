@@ -91,7 +91,8 @@ var Main = /** @class */ (function () {
                     { label: 'Paste', accelerator: 'CmdOrCtrl+V', role: 'paste' },
                     {
                         label: 'Select All',
-                        accelerator: 'CmdOrCtrl+A'
+                        accelerator: 'CmdOrCtrl+A',
+                        role: 'selectAll'
                     },
                 ]
             },

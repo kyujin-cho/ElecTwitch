@@ -4,10 +4,10 @@ import secret from '../secret'
 import { ChatState } from '../constants'
 import { connect } from 'react-redux'
 import { withRouter, RouteComponentProps } from 'react-router-dom'
-import { setStreamer } from '../redux/actions'
 import HLSSource from './HLSSource'
 import { Card, CardContent, Typography } from '@material-ui/core'
 import { Player } from 'video-react'
+import { Chat } from '.'
 
 const serialize = (obj: any) => {
   const str = []
@@ -30,13 +30,6 @@ const clone = (obj: any) => {
   return copy
 }
 
-interface IPlayerBaseProps extends RouteComponentProps<any> {}
-interface IPlayerStateProps {
-  chatInfo: ChatState
-}
-interface IPlayerDispatchProps {
-  setChatInfo: (streamer: string) => void
-}
 interface IState {
   isLoaded: boolean
   streamOn: boolean
@@ -45,15 +38,11 @@ interface IState {
   sig: string
   accessToken: string
   title: string
+  videoUrl: string
 }
 
-class PlayerPage extends Component<
-  IPlayerBaseProps & IPlayerStateProps & IPlayerDispatchProps,
-  IState
-> {
-  constructor(
-    props: IPlayerBaseProps & IPlayerStateProps & IPlayerDispatchProps
-  ) {
+class PlayerPage extends Component<RouteComponentProps<any>, IState> {
+  constructor(props: RouteComponentProps<any>) {
     super(props)
     this.state = {
       isLoaded: false,
@@ -63,11 +52,23 @@ class PlayerPage extends Component<
       sig: '',
       accessToken: '',
       title: '',
+      videoUrl: '',
     }
   }
   public async componentDidMount() {
     console.log(this.props)
     await this.openStream(this.props.match.params.streamerName)
+  }
+
+  public componentWillUnmount() {
+    const vidElement = document.getElementsByTagName('video')[0]
+    if (vidElement) {
+      vidElement.pause()
+      this.setState({
+        videoUrl: '',
+      })
+      vidElement.setAttribute('src', '')
+    }
   }
   private async openStream(userInfo: string) {
     let res
@@ -166,6 +167,7 @@ class PlayerPage extends Component<
         (this.state.streamInfo
           ? this.state.streamInfo.stream.channel.display_name
           : String(userInfo)),
+      videoUrl: url,
     })
     const showInput = document.getElementById('show-input')
     if (showInput !== null) showInput.classList.remove('hidden')
@@ -174,7 +176,6 @@ class PlayerPage extends Component<
   public render() {
     let body = <div className="hidden">Not Loaded!</div>
     if (this.state.isLoaded) {
-      let url: string
       let playerArea = (
         <img
           src={this.state.streamInfo.stream.channel.video_banner}
@@ -185,32 +186,24 @@ class PlayerPage extends Component<
         />
       )
       if (this.state.streamOn) {
-        url = `https://usher.ttvnw.net/api/channel/hls/${this.state.streamInfo.stream.channel.name.toLowerCase()}.m3u8?`
-        url += serialize({
-          allow_source: 'true',
-          baking_bread: 'false',
-          fast_bread: 'false',
-          player_backend: 'mediaplayer',
-          rtqos: 'control',
-          sig: this.state.sig,
-          token: this.state.accessToken,
-        })
         playerArea = ( // tslint:disable-next-line:jsx-no-string-ref
           <Player ref="player" autoPlay={this.state.streamOn}>
-            <HLSSource isVideoChild src={url} />
+            <HLSSource isVideoChild src={this.state.videoUrl} />
           </Player>
         )
       }
       body = (
         <div id="player">
-          {playerArea}
           <div
             style={{
               display: 'inline-block',
-              width: '100%',
+              width: '68%',
               marginTop: '10px',
+              marginLeft: '1%',
             }}
           >
+            {playerArea}
+            <hr />
             <Card id="streamer-info" style={{ float: 'left' }}>
               <div>
                 <CardContent
@@ -238,6 +231,12 @@ class PlayerPage extends Component<
               />
             </a>
           </div>
+          <Chat
+            streamer={this.props.match.params.streamerName}
+            history={this.props.history}
+            location={this.props.location}
+            match={this.props.match}
+          />
         </div>
       )
     }
@@ -245,31 +244,4 @@ class PlayerPage extends Component<
   }
 }
 
-const mapStateToProps = (
-  state: ChatState,
-  ownProps: IPlayerBaseProps
-): IPlayerStateProps => {
-  return {
-    chatInfo: {
-      streamer: state.streamer,
-      streamerName: state.streamerName,
-    },
-    ...ownProps,
-  }
-}
-
-const mapDispatchToProps = (dispatch: Dispatch<any>): IPlayerDispatchProps => {
-  return {
-    setChatInfo: (streamer: string) => dispatch(setStreamer(streamer)),
-  }
-}
-
-export default connect<
-  IPlayerStateProps,
-  IPlayerDispatchProps,
-  IPlayerBaseProps,
-  ChatState
->(
-  mapStateToProps,
-  mapDispatchToProps
-)(withRouter(PlayerPage))
+export default withRouter(PlayerPage)

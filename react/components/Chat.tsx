@@ -1,14 +1,13 @@
-import Mui, { Card, CardContent, TextField } from '@material-ui/core'
+import Mui, { Card, CardContent, TextField, Button } from '@material-ui/core'
 import * as Icons from '@material-ui/icons'
 import Axios, { AxiosResponse } from 'axios'
 import linkifyUrls from 'linkify-urls'
 import React, { ChangeEvent, Component, KeyboardEvent } from 'react'
 import { connect } from 'react-redux'
-import tmi from 'twitch-js'
+import tmi, { Client } from 'twitch-js'
 import { AuthState, ChatState, YDCConResponse } from '../constants'
-import { setStreamerName } from '../redux/actions'
 import secret from '../secret'
-import { Dispatch } from 'redux'
+import { withRouter, RouteComponentProps } from 'react-router-dom'
 
 declare global {
   // tslint:disable-next-line:interface-name
@@ -42,15 +41,11 @@ const clone = (obj: any) => {
 
 interface IChatStateProps {
   authInfo: AuthState
-  chatInfo: ChatState
 }
-
-interface IChatDispatchProps {
-  setStreamer: (s: string) => void
-}
-
 // tslint:disable-next-line:no-empty-interface
-interface IChatBaseProps {
+interface IChatDispatchProps {}
+
+interface IChatBaseProps extends RouteComponentProps<any> {
   streamer: string
 }
 
@@ -58,12 +53,14 @@ interface IState {
   dcCon: any
   badges: any
   specialModeActivated: boolean
-  irc: any
+  irc: Client
   chat: string
   sendingChat: boolean
   keymap: any
   users: any
   index: number
+  theme: string
+  streamer: string
 }
 
 interface IChatType {
@@ -85,20 +82,45 @@ class ChatPage extends Component<
       dcCon: {},
       badges: {},
       specialModeActivated: false,
-      irc: {},
+      irc: new tmi.client(),
       chat: '',
       sendingChat: false,
       keymap: {},
       users: {},
       index: -1,
+      theme: '../stylesheets/bridgebbcc_default.css',
+      streamer: props.streamer,
     }
     this.handleChange = this.handleChange.bind(this)
     this.handleKey = this.handleKey.bind(this)
     this.sendChat = this.sendChat.bind(this)
   }
-  public async componentDidMount() {
-    const authInfo: AuthState = this.props.authInfo
 
+  public async componentDidMount() {
+    // this.props.router.setRouteLeaveHook(this.props.route, () => {})
+    await this.activateChat()
+  }
+
+  public async componentWillUnmount() {
+    await this.state.irc.disconnect()
+    console.log('Disconnected from IRC')
+  }
+
+  private async activateChat() {
+    this.state.irc.opts = {
+      options: {
+        debug: true,
+        clientId: secret.api.clientId,
+      },
+      connection: {
+        reconnect: false,
+      },
+      identity: {
+        username: this.props.authInfo.username,
+        password: 'oauth:' + this.props.authInfo.accessToken,
+      },
+    }
+    console.log(this.props)
     if (!window.localStorage.getItem('Chat-Color')) {
       window.localStorage.setItem('Chat-Color', 'none')
     }
@@ -114,21 +136,13 @@ class ChatPage extends Component<
     stylesheet.setAttribute('href', cssURL)
     document.head.appendChild(stylesheet)
 
-    const irc = new tmi.client({
-      options: {
-        debug: true,
-        clientId: secret.api.clientId,
-      },
-      connection: {
-        reconnect: false,
-      },
-      identity: authInfo,
-    })
+    const irc = this.state.irc
 
+    console.log('Connecting to ')
     irc
       .connect()
       .then(() => {
-        if (this.props.streamer !== '#') irc.join(this.props.streamer)
+        if (this.state.streamer !== '#') irc.join(this.state.streamer)
       })
       .catch(err => console.error(err))
     irc.on(
@@ -182,15 +196,18 @@ class ChatPage extends Component<
       }.bind(this)
     )
     irc.on('host', (channel: any, target: string, viewers: any) => {
-      this.props.setStreamer(target)
+      this.setState({
+        streamer: target,
+      })
     })
 
     let jsons: AxiosResponse<YDCConResponse>
-    switch (this.props.streamer) {
+    switch (this.state.streamer) {
+      case 'thy2134':
       case 'yeokka':
         console.log('Loading yeokka DCCon...')
         jsons = await Axios.get(
-          'https://krynen.github.io/jsassist-custom-css/js/dccon_list.json'
+          'https://watert.gitlab.io/emotes/yeokka/ODF.json'
         )
 
         const items: { [kwd: string]: string } = {}
@@ -213,10 +230,10 @@ class ChatPage extends Component<
         })
         break
     }
-    if (this.props.streamer !== '#') {
-      console.log('Loading badge for ' + this.props.streamer + '...')
+    if (this.state.streamer !== '#') {
+      console.log('Loading badge for ' + this.state.streamer + '...')
       let userId = await Axios.get(
-        'https://api.twitch.tv/helix/users?login=' + this.props.streamer,
+        'https://api.twitch.tv/helix/users?login=' + this.state.streamer,
         { headers: { 'Client-ID': 'azoulwf5023j77d8qbuhidthgw9pg9' } }
       )
       userId = userId.data.data[0].id
@@ -354,8 +371,9 @@ class ChatPage extends Component<
     const scrollDiff = chatElement.scrollHeight - chatElement.scrollTop
 
     chatMsgBox.innerHTML +=
-      (this.props.streamer === 'yeokka' ||
-        this.props.streamer === 'funzinnu') &&
+      (this.state.streamer === 'yeokka' ||
+        this.state.streamer === 'thy2134' ||
+        this.state.streamer === 'funzinnu') &&
       item.message.indexOf('~') !== -1
         ? this.getCons(item.message)
         : item.message
@@ -372,10 +390,10 @@ class ChatPage extends Component<
 
     chatWrapper.innerHTML += body.outerHTML
     if (document.querySelectorAll('div.chat_outer_box').length > 120) {
-      chatWrapper.removeChild(chatOuterBox[0])
+      chatWrapper.removeChild(chatWrapper.children[0])
     }
 
-    chatWrapper.scrollTop = chatWrapper.scrollHeight - scrollDiff
+    chatWrapper.scrollTop = chatWrapper.scrollHeight
   }
 
   public getCons(message: string) {
@@ -460,35 +478,6 @@ class ChatPage extends Component<
           message: `Loaded theme ${keyword ? keyword : cssURL}.`,
         })
         if (stylesheet !== null) stylesheet.setAttribute('href', cssURL)
-      } else if (this.state.chat.startsWith('!!setTheme')) {
-        if (this.state.chat.split(' ').length < 3) {
-          this.addChat({
-            username: 'Internal Service',
-            message: 'Invalid argument supplied for setTheme command.',
-          })
-        } else {
-          const keyword = this.state.chat.split(' ')[1]
-          const url = this.state.chat.split(' ')[2]
-          const themeRawString = window.localStorage.getItem('theme')
-          let themes: { [key: string]: string }
-          if (themeRawString) themes = JSON.parse(themeRawString)
-          else themes = { default: '../stylesheets/bridgebbcc_default.css' }
-
-          if (keyword === 'default') {
-            this.addChat({
-              username: 'Internal Service',
-              message:
-                'Cannot use "default" as theme preset - reserved keyword. ',
-            })
-          } else {
-            themes[keyword] = url
-            window.localStorage.setItem('theme', JSON.stringify(themes))
-            this.addChat({
-              username: 'Internal Service',
-              message: `Updated theme ${keyword}.`,
-            })
-          }
-        }
       } else if (this.state.chat.startsWith('!!setOption')) {
         switch (this.state.chat.split(' ')[1]) {
           case 'chatColor':
@@ -547,6 +536,7 @@ class ChatPage extends Component<
           )
         )
       } else {
+        console.log(this.state.irc)
         this.state.irc.say(this.state.irc.getChannels()[0], this.state.chat)
       }
       document.querySelectorAll('#text-area textarea').forEach((item: any) => {
@@ -567,10 +557,24 @@ class ChatPage extends Component<
       <div
         id="chat"
         style={{
-          background: 'grey',
+          width: '28%',
+          marginRight: '1%',
+          float: 'right',
         }}
       >
-        <div id="chat_wrapper" />
+        <link
+          rel="stylesheet"
+          href="../stylesheets/bridgebbcc_default.css"
+          id="chat-theme"
+        />
+        <div
+          id="chat_wrapper"
+          style={{
+            background: 'grey',
+            marginTop: '15px',
+            marginBottom: '15px',
+          }}
+        />
         <Card>
           <CardContent>
             <div
@@ -581,7 +585,7 @@ class ChatPage extends Component<
             >
               <div id="text-area">
                 <TextField
-                  disabled={!this.state.irc}
+                  disabled={this.props.authInfo.refreshToken === ''}
                   multiline={true}
                   label="Chat Contents"
                   fullWidth={true}
@@ -591,14 +595,14 @@ class ChatPage extends Component<
                 />
               </div>
               <div id="send-button">
-                <Mui.Button
+                <Button
                   id="send-chat"
-                  disabled={!this.state.irc}
+                  disabled={this.props.authInfo.refreshToken === ''}
                   color="primary"
                   onClick={this.sendChat}
                 >
-                  <Icons.Edit />
-                </Mui.Button>
+                  Send
+                </Button>
               </div>
             </div>
           </CardContent>
@@ -609,36 +613,18 @@ class ChatPage extends Component<
 }
 
 const mapStateToProps = (
-  state: ChatState & AuthState,
+  state: { authReducer: AuthState },
   ownProps: IChatBaseProps
 ): IChatStateProps => {
   return {
-    authInfo: {
-      username: state.username,
-      accessToken: state.accessToken,
-      refreshToken: state.refreshToken,
-      expiresIn: state.expiresIn,
-    },
-    chatInfo: {
-      streamer: state.streamer,
-      streamerName: state.streamerName,
-    },
+    authInfo: state.authReducer,
     ...ownProps,
-  }
-}
-
-const mapDispatchToProps = (dispatch: Dispatch<any>): IChatDispatchProps => {
-  return {
-    setStreamer: (streamer: string) => dispatch(setStreamerName(streamer)),
   }
 }
 
 export default connect<
   IChatStateProps,
-  IChatDispatchProps,
+  any,
   IChatBaseProps,
-  ChatState & AuthState
->(
-  mapStateToProps,
-  mapDispatchToProps
-)(ChatPage)
+  { authReducer: AuthState }
+>(mapStateToProps)(withRouter(ChatPage))

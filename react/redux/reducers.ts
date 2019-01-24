@@ -1,38 +1,22 @@
 import { Reducer, combineReducers } from 'redux'
-import { ChatState, ActionTypes, AuthState } from '../constants'
-
-export const chatReducer: Reducer<ChatState> = (
-  state: ChatState = {
-    streamerName: '',
-    streamer: '',
-  },
-  action
-): ChatState => {
-  switch (action.type) {
-    case ActionTypes.SET_STREAMER:
-      return { ...state, streamer: action.setTo }
-    case ActionTypes.SET_STREAMER_NAME:
-      return { ...state, streamerName: action.setTo }
-    default:
-      return state
-  }
-}
+import { ActionTypes, AuthState } from '../constants'
 
 export const authReducer: Reducer<AuthState> = (
   state: AuthState = {
-    username: '',
+    username: 'justinfan' + Math.floor(Math.random() * 100000),
     accessToken: '',
     refreshToken: '',
     expiresIn: 0,
   },
   action
 ): AuthState => {
+  console.log(action)
   switch (action.type) {
     case ActionTypes.SET_AUTH_INFO:
-      return { ...state, ...action.setTo }
+      return { ...state, ...action.payload }
     default:
       return state
   }
 }
 
-export const Reducers = combineReducers({ chatReducer, authReducer })
+export const Reducers = combineReducers({ authReducer })

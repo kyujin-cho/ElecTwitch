@@ -3,7 +3,21 @@ import { HashRouter as Router, Switch, Route, Link } from 'react-router-dom'
 import Secret from './secret'
 import Axios from 'axios'
 import * as Components from './components'
-import { AppBar, Toolbar, Typography, Button } from '@material-ui/core'
+import {
+  AppBar,
+  Toolbar,
+  Typography,
+  Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+} from '@material-ui/core'
+import { connect } from 'react-redux'
+import { AuthState } from './constants'
+import { setAuth } from './redux/actions'
+import { Dispatch } from 'redux'
 
 declare global {
   // tslint:disable-next-line:interface-name
@@ -14,17 +28,140 @@ declare global {
 
 const { BrowserWindow, app } = window.require('electron').remote
 
-class MainPage extends Component<any, { shouldLogin: boolean }> {
+// tslint:disable-next-line:no-empty-interface
+interface IMainBaseProps {}
+interface IMainStateProps {
+  authInfo: AuthState
+}
+interface IMainDispatchProps {
+  setAuthInfo: (
+    username: string,
+    accessToken: string,
+    refreshToken: string,
+    expiresIn: number
+  ) => void
+}
+
+interface IState {
+  shouldLogin: boolean
+  showBackBtn: boolean
+  updateOpen: boolean
+}
+
+class MainPage extends Component<any, IState> {
   constructor(props: any) {
     super(props)
-    this.state = { shouldLogin: true }
+    this.state = { shouldLogin: true, showBackBtn: false, updateOpen: false }
     this.tryLogin = this.tryLogin.bind(this)
+    this.handleUpdateDialogClose = this.handleUpdateDialogClose.bind(this)
+    this.goAndGetUpdate = this.goAndGetUpdate.bind(this)
   }
 
   public async componentDidMount() {
+    const username = localStorage.getItem('Username')
+
     this.setState({
-      shouldLogin: window.localStorage.getItem('Username') === null,
+      shouldLogin: username === null,
     })
+
+    await this.checkUpdate()
+    if (username != null) {
+      const expiresIn = parseInt(
+        window.localStorage.getItem('Expire-Date')!,
+        10
+      )
+      const newToken = await this.refreshToken(username)
+      setInterval(async () => {
+        await this.refreshToken(username)
+      }, expiresIn * 1000)
+    }
+  }
+
+  private async refreshToken(username: string): Promise<string> {
+    console.log({
+      refresh_token: window.localStorage.getItem('Refresh-Token'),
+      client_id: Secret.api.clientId,
+      client_secret: Secret.api.secret,
+    })
+
+    const params =
+      `client_id=${Secret.api.clientId}` +
+      `&client_secret=${Secret.api.secret}` +
+      `&refresh_token=${window.localStorage.getItem('Refresh-Token')}` +
+      `&grant_type=refresh_token`
+
+    const token = await Axios.post<{
+      access_token: string
+      refresh_token: string
+      scope: string
+      expires_in: number
+    }>('https://id.twitch.tv/oauth2/token', params, {
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+    })
+
+    window.localStorage.setItem('OAuth-Token', token.data.access_token)
+    window.localStorage.setItem('Refresh-Token', token.data.refresh_token)
+
+    this.updateAuthInfo(
+      username,
+      token.data.access_token,
+      token.data.refresh_token,
+      token.data.expires_in
+    )
+
+    return token.data.access_token
+  }
+
+  private updateAuthInfo(
+    username: string,
+    accessToken: string,
+    refreshToken: string,
+    expiresIn: number
+  ) {
+    this.props.setAuthInfo(username, accessToken, refreshToken, expiresIn)
+  }
+
+  private async checkUpdate() {
+    const appVersion = app.getVersion()
+    const newestVersion = await Axios.get(
+      'https://api.github.com/repos/thy2134/ElecTwitch/releases'
+    )
+    if (
+      newestVersion.data[0].tag_name.split('-')[0].substring(1) > appVersion
+    ) {
+      this.setState({
+        updateOpen: true,
+      })
+    }
+  }
+
+  public componentDidUpdate(prevProps: any) {
+    if (this.props.location !== prevProps.location) {
+      this.setState({
+        showBackBtn: this.props.location !== '/',
+      })
+    }
+  }
+
+  private toMainMenu(e: MouseEvent) {
+    e.preventDefault()
+  }
+  private handleUpdateDialogClose() {
+    this.setState({
+      updateOpen: false,
+    })
+  }
+
+  private async goAndGetUpdate() {
+    const shell = window.require('electron').shell
+    let url = await Axios.get(
+      'https://api.github.com/repos/thy2134/ElecTwitch/releases'
+    )
+    url = url.data[0].html_url
+    shell.openExternal(url)
+    this.handleUpdateDialogClose()
   }
 
   private async tryLogin() {
@@ -124,32 +261,100 @@ class MainPage extends Component<any, { shouldLogin: boolean }> {
   }
   public render() {
     return (
-      <div>
-        <AppBar position="static">
-          <Toolbar>
-            <Typography id="title-area" color="inherit" style={{ flex: 1 }}>
-              Twitch
-            </Typography>
+      <Router>
+        <div>
+          <AppBar position="static">
+            <Toolbar>
+              {this.state.showBackBtn ? (
+                <Typography id="title-area" color="inherit" style={{ flex: 1 }}>
+                  Twitch
+                </Typography>
+              ) : (
+                <Link
+                  to="/"
+                  style={{
+                    textDecorationLine: 'none',
+                    color: 'white',
+                    fontSize: '24px',
+                    fontWeight: 'bold',
+                  }}
+                >
+                  Home
+                </Link>
+              )}
 
-            <Button
-              color="inherit"
-              id="login-button"
-              onClick={this.tryLogin}
-              disabled={!this.state.shouldLogin}
-            >
-              {this.state.shouldLogin ? 'Login' : 'Logged In'}
-            </Button>
-          </Toolbar>
-        </AppBar>
-        <Router>
+              <Button
+                color="inherit"
+                id="login-button"
+                onClick={this.tryLogin}
+                disabled={!this.state.shouldLogin}
+              >
+                {this.state.shouldLogin ? 'Login' : 'Logged In'}
+              </Button>
+            </Toolbar>
+          </AppBar>
           <div>
             <Route exact path="/" component={Components.StartPanel} />
             <Route path="/:streamerName" component={Components.Player} />
           </div>
-        </Router>
-      </div>
+
+          <Dialog
+            open={this.state.updateOpen}
+            onClose={this.handleUpdateDialogClose}
+            aria-labelledby="alert-dialog-title"
+            aria-describedby="alert-dialog-description"
+          >
+            <DialogTitle id="update-dialog-title">
+              {'Cool Update for the Cool Guys'}
+            </DialogTitle>
+            <DialogContent>
+              <DialogContentText id="update-dialog-description">
+                {
+                  "All the finest Twitch users get their update asap. Why don't you go and get some too?"
+                }
+              </DialogContentText>
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={this.handleUpdateDialogClose} color="primary">
+                Close
+              </Button>
+              <Button onClick={this.goAndGetUpdate} color="primary" autoFocus>
+                Take me to the Download Page
+              </Button>
+            </DialogActions>
+          </Dialog>
+        </div>
+      </Router>
     )
   }
 }
+const mapStateToProps = (
+  state: { authReducer: AuthState },
+  ownProps: IMainBaseProps
+): IMainStateProps => {
+  return {
+    authInfo: state.authReducer,
+    ...ownProps,
+  }
+}
 
-export default MainPage
+const mapDispatchToProps = (dispatch: Dispatch<any>): IMainDispatchProps => {
+  return {
+    setAuthInfo: (
+      username: string,
+      accessToken: string,
+      refreshToken: string,
+      expiresIn: number
+    ) => dispatch(setAuth({ username, accessToken, refreshToken, expiresIn })),
+  }
+}
+
+export default connect<
+  IMainStateProps,
+  IMainDispatchProps,
+  IMainBaseProps,
+  { authReducer: AuthState }
+>(
+  mapStateToProps,
+  mapDispatchToProps
+)(MainPage)

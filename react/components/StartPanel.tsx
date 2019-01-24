@@ -17,7 +17,7 @@ import {
 } from '@material-ui/core'
 import FollowStreams from './FollowStreams'
 import { ChatState, AuthState, MyStreamsType } from '../constants'
-import { setAuth, setStreamer } from '../redux/actions'
+import { setAuth } from '../redux/actions'
 import { connect } from 'react-redux'
 import { withRouter, RouteComponentProps } from 'react-router-dom'
 import { Send, Add } from '@material-ui/icons'
@@ -34,19 +34,10 @@ type TwitchStreamsType = {
 // tslint:disable-next-line:no-empty-interface
 interface IStartBaseProps extends RouteComponentProps<any> {}
 interface IStartStateProps {
-  chatInfo: ChatState
   authInfo: AuthState
 }
 // tslint:disable-next-line:no-empty-interface
-interface IStartDispatchProps {
-  setAuthInfo: (
-    username: string,
-    accessToken: string,
-    refreshToken: string,
-    expiresIn: number
-  ) => void
-  setChatInfo: (streamer: string) => void
-}
+interface IStartDispatchProps {}
 
 interface IState {
   streamerName: string
@@ -98,8 +89,7 @@ class StartPanelPage extends Component<
     this.handleClickOpen = this.handleClickOpen.bind(this)
     this.handleClose = this.handleClose.bind(this)
     this.onChange = this.onChange.bind(this)
-    this.handleUpdateDialogClose = this.handleUpdateDialogClose.bind(this)
-    this.goAndGetUpdate = this.goAndGetUpdate.bind(this)
+    this.onClick = this.onClick.bind(this)
   }
 
   private openStream(stream: string) {
@@ -107,68 +97,12 @@ class StartPanelPage extends Component<
   }
 
   public async componentDidMount() {
-    this.updateChatInfo('#')
-    const appVersion = window.require('electron').remote.app.getVersion()
-    const newestVersion = await Axios.get(
-      'https://api.github.com/repos/thy2134/ElecTwitch/releases'
-    )
-    if (
-      newestVersion.data[0].tag_name.split('-')[0].substring(1) > appVersion
-    ) {
-      this.setState({
-        updateOpen: true,
-      })
-    }
-
+    const accessToken = this.props.authInfo.accessToken
     const username = localStorage.getItem('Username')
-    if (username != null) {
-      const expiresIn = parseInt(
-        window.localStorage.getItem('Expire-Date')!,
-        10
-      )
-      const newToken = await this.refreshToken(username)
-      await this.setUserData(newToken)
-      setInterval(async () => {
-        await this.refreshToken(username)
-      }, expiresIn * 1000)
-    } else this.logout()
-  }
 
-  private async refreshToken(username: string): Promise<string> {
-    console.log({
-      refresh_token: window.localStorage.getItem('Refresh-Token'),
-      client_id: secret.api.clientId,
-      client_secret: secret.api.secret,
-    })
-
-    const params =
-      `client_id=${secret.api.clientId}` +
-      `&client_secret=${secret.api.secret}` +
-      `&refresh_token=${window.localStorage.getItem('Refresh-Token')}` +
-      `&grant_type=refresh_token`
-
-    const token = await Axios.post<{
-      access_token: string
-      refresh_token: string
-      scope: string
-      expires_in: number
-    }>('https://id.twitch.tv/oauth2/token', params, {
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-    })
-
-    window.localStorage.setItem('OAuth-Token', token.data.access_token)
-    window.localStorage.setItem('Refresh-Token', token.data.refresh_token)
-
-    await this.updateAuthInfo(
-      username,
-      token.data.access_token,
-      token.data.refresh_token,
-      token.data.expires_in
-    )
-
-    return token.data.access_token
+    if (username !== null) {
+      await this.setUserData(accessToken)
+    }
   }
 
   private async setUserData(accessToken: string) {
@@ -269,28 +203,6 @@ class StartPanelPage extends Component<
     })
   }
 
-  private async updateAuthInfo(
-    username: string,
-    accessToken: string,
-    refreshToken: string,
-    expiresIn: number
-  ) {
-    this.props.setAuthInfo(username, accessToken, refreshToken, expiresIn)
-  }
-
-  private logout() {
-    this.props.setAuthInfo(
-      'justinfan' + Math.floor(Math.random() * 100000),
-      '',
-      '',
-      0
-    )
-  }
-
-  private updateChatInfo(streamer: string) {
-    this.props.setChatInfo(streamer)
-  }
-
   private onChange(e: ChangeEvent<HTMLInputElement>) {
     this.setState({
       streamerName: e.target.value,
@@ -301,24 +213,8 @@ class StartPanelPage extends Component<
   //   if (e.keyCode === 91) this.onClick()
   // }
 
-  private handleUpdateDialogClose() {
-    this.setState({
-      updateOpen: false,
-    })
-  }
-
-  private async goAndGetUpdate() {
-    const shell = window.require('electron').shell
-    let url = await Axios.get(
-      'https://api.github.com/repos/thy2134/ElecTwitch/releases'
-    )
-    url = url.data[0].html_url
-    shell.openExternal(url)
-    this.handleUpdateDialogClose()
-  }
-
   private onClick() {
-    this.openStream(String(this.state.streamerName).toString())
+    this.props.history.push('/' + this.state.streamerName)
   }
 
   private handleClose() {
@@ -375,31 +271,6 @@ class StartPanelPage extends Component<
             </Button>
           </DialogActions>
         </Dialog>
-        <Dialog
-          open={this.state.updateOpen}
-          onClose={this.handleUpdateDialogClose}
-          aria-labelledby="alert-dialog-title"
-          aria-describedby="alert-dialog-description"
-        >
-          <DialogTitle id="update-dialog-title">
-            {'Cool Update for the Cool Guys'}
-          </DialogTitle>
-          <DialogContent>
-            <DialogContentText id="update-dialog-description">
-              {
-                "All the finest Twitch users get their update asap. Why don't you go and get some too?"
-              }
-            </DialogContentText>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={this.handleUpdateDialogClose} color="primary">
-              Close
-            </Button>
-            <Button onClick={this.goAndGetUpdate} color="primary" autoFocus>
-              Take me to the Download Page
-            </Button>
-          </DialogActions>
-        </Dialog>
         <div
           id="show-input"
           onClick={() =>
@@ -416,42 +287,17 @@ class StartPanelPage extends Component<
 }
 
 const mapStateToProps = (
-  state: ChatState & AuthState,
+  state: { authReducer: AuthState },
   ownProps: IStartBaseProps
 ): IStartStateProps => {
   return {
-    authInfo: {
-      username: state.username,
-      accessToken: state.accessToken,
-      refreshToken: state.refreshToken,
-      expiresIn: state.expiresIn,
-    },
-    chatInfo: {
-      streamer: state.streamer,
-      streamerName: state.streamerName,
-    },
+    authInfo: state.authReducer,
     ...ownProps,
   }
 }
-
-const mapDispatchToProps = (dispatch: Dispatch<any>): IStartDispatchProps => {
-  return {
-    setAuthInfo: (
-      username: string,
-      accessToken: string,
-      refreshToken: string,
-      expiresIn: number
-    ) => dispatch(setAuth({ username, accessToken, refreshToken, expiresIn })),
-    setChatInfo: (streamer: string) => dispatch(setStreamer(streamer)),
-  }
-}
-
 export default connect<
   IStartStateProps,
   IStartDispatchProps,
   IStartBaseProps,
-  ChatState & AuthState
->(
-  mapStateToProps,
-  mapDispatchToProps
-)(withRouter(StartPanelPage))
+  { authReducer: AuthState }
+>(mapStateToProps)(withRouter(StartPanelPage))

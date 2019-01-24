@@ -50,7 +50,7 @@ class FollowStreams extends Component<IProps, any> {
           <div className="inside">
             <Typography component="h2">Follows</Typography>
             {div ? (
-              <GridList className={'gridList'} cols={2.5}>
+              <GridList className={'gridList'} cols={2}>
                 {div}
               </GridList>
             ) : (
