@@ -250,3 +250,4 @@ javascripts/*
 
 App.js
 main.js
+react/secret.ts
