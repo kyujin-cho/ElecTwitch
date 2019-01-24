@@ -16,6 +16,9 @@ const badgeIcon = nativeImage.createFromPath(
   __dirname + '/images/electron-badge.png'
 )
 
+// tslint:disable-next-line:no-var-requires
+const isDev = require('electron-is-dev')
+
 export default class Main {
   private static mainWindow: Electron.BrowserWindow | null
   private static application: Electron.App
@@ -91,7 +94,6 @@ export default class Main {
         submenu: [
           { accelerator: 'CmdOrCtrl+M', role: 'minimize' },
           { accelerator: 'CmdOrCtrl+W', role: 'close' },
-          { accelerator: 'CmdOrCtrl+R', role: 'reload' },
           { role: 'zoom' },
           { type: 'separator' },
           { role: 'front' },
@@ -119,9 +121,15 @@ export default class Main {
       },
     ]
 
+    if (isDev) {
+      const subMenu: MenuItemConstructorOptions[] = template[1]
+        .submenu! as MenuItemConstructorOptions[]
+      subMenu.push({ accelerator: 'CmdOrCtrl+R', role: 'reload' })
+      Main.mainWindow.webContents.openDevTools()
+    }
+
     Menu.setApplicationMenu(Menu.buildFromTemplate(template))
     if (process.platform === 'darwin') Main.application.dock.setIcon(normalIcon)
-    Main.mainWindow.webContents.openDevTools()
   }
 
   public static main(app: Electron.App, browserWindow: typeof BrowserWindow) {

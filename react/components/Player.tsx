@@ -1,13 +1,18 @@
-import React, { Component, Dispatch } from 'react'
+import React, { Component, MouseEvent } from 'react'
 import Axios from 'axios'
 import secret from '../secret'
-import { ChatState } from '../constants'
-import { connect } from 'react-redux'
 import { withRouter, RouteComponentProps } from 'react-router-dom'
 import HLSSource from './HLSSource'
-import { Card, CardContent, Typography } from '@material-ui/core'
+import {
+  Card,
+  CardContent,
+  Typography,
+  Tooltip,
+  Button,
+} from '@material-ui/core'
 import { Player } from 'video-react'
 import { Chat } from '.'
+import { Home } from '@material-ui/icons'
 
 const serialize = (obj: any) => {
   const str = []
@@ -54,6 +59,8 @@ class PlayerPage extends Component<RouteComponentProps<any>, IState> {
       title: '',
       videoUrl: '',
     }
+
+    this.backToHome = this.backToHome.bind(this)
   }
   public async componentDidMount() {
     console.log(this.props)
@@ -69,6 +76,11 @@ class PlayerPage extends Component<RouteComponentProps<any>, IState> {
       })
       vidElement.setAttribute('src', '')
     }
+  }
+
+  private backToHome(e: MouseEvent<HTMLButtonElement>) {
+    e.preventDefault()
+    this.props.history.push('/')
   }
   private async openStream(userInfo: string) {
     let res
@@ -178,11 +190,8 @@ class PlayerPage extends Component<RouteComponentProps<any>, IState> {
     if (this.state.isLoaded) {
       let playerArea = (
         <img
+          id="player-banner"
           src={this.state.streamInfo.stream.channel.video_banner}
-          style={{
-            width: '100%',
-            height: '100%',
-          }}
         />
       )
       if (this.state.streamOn) {
@@ -194,17 +203,15 @@ class PlayerPage extends Component<RouteComponentProps<any>, IState> {
       }
       body = (
         <div id="player">
-          <div
-            style={{
-              display: 'inline-block',
-              width: '68%',
-              marginTop: '10px',
-              marginLeft: '1%',
-            }}
-          >
+          <Tooltip title="Back to Home" placement="bottom">
+            <Button id="open-stream" color="primary" onClick={this.backToHome}>
+              <Home />
+            </Button>
+          </Tooltip>
+          <div id="player-left-side">
             {playerArea}
             <hr />
-            <Card id="streamer-info" style={{ float: 'left' }}>
+            <Card id="streamer-info">
               <div>
                 <CardContent
                   style={{

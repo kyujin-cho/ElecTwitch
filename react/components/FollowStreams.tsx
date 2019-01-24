@@ -48,7 +48,6 @@ class FollowStreams extends Component<IProps, any> {
       <div className={'following-streams'}>
         <Paper className={'paper'} elevation={4}>
           <div className="inside">
-            <Typography component="h2">Follows</Typography>
             {div ? (
               <GridList className={'gridList'} cols={2}>
                 {div}

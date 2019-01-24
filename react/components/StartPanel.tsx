@@ -1,23 +1,18 @@
 import React, { Component, ChangeEvent, Dispatch } from 'react'
 import Axios from 'Axios'
 import secret from '../secret'
-import { BrowserWindow } from 'electron'
 import DialogActions from '@material-ui/core/DialogActions'
 import {
   DialogContentText,
   DialogContent,
   Button,
   Dialog,
-  AppBar,
-  Toolbar,
-  Typography,
   Tooltip,
   DialogTitle,
   TextField,
 } from '@material-ui/core'
 import FollowStreams from './FollowStreams'
-import { ChatState, AuthState, MyStreamsType } from '../constants'
-import { setAuth } from '../redux/actions'
+import { AuthState, MyStreamsType } from '../constants'
 import { connect } from 'react-redux'
 import { withRouter, RouteComponentProps } from 'react-router-dom'
 import { Send, Add } from '@material-ui/icons'

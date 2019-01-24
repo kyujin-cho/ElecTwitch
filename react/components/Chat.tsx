@@ -1,5 +1,4 @@
 import Mui, { Card, CardContent, TextField, Button } from '@material-ui/core'
-import * as Icons from '@material-ui/icons'
 import Axios, { AxiosResponse } from 'axios'
 import linkifyUrls from 'linkify-urls'
 import React, { ChangeEvent, Component, KeyboardEvent } from 'react'
@@ -554,35 +553,16 @@ class ChatPage extends Component<
 
   public render() {
     return (
-      <div
-        id="chat"
-        style={{
-          width: '28%',
-          marginRight: '1%',
-          float: 'right',
-        }}
-      >
+      <div id="chat">
         <link
           rel="stylesheet"
           href="../stylesheets/bridgebbcc_default.css"
           id="chat-theme"
         />
-        <div
-          id="chat_wrapper"
-          style={{
-            background: 'grey',
-            marginTop: '15px',
-            marginBottom: '15px',
-          }}
-        />
+        <div id="chat_wrapper" />
         <Card>
           <CardContent>
-            <div
-              id="send-chat-card"
-              style={{
-                textShadow: 'none',
-              }}
-            >
+            <div id="send-chat-card">
               <div id="text-area">
                 <TextField
                   disabled={this.props.authInfo.refreshToken === ''}
